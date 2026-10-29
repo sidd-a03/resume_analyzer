@@ -1,0 +1,22 @@
+services:
+  database:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=resume_analyzer
+      - POSTGRES_PASSWORD=mysecretpassword
+      - POSTGRES_DB=resume_db
+    restart: on-failure
+    container_name: resume_container
+    volumes:
+      - resume_volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U resume_analyzer -d resume_db"]
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  resume_volume:
