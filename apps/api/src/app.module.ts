@@ -2,6 +2,11 @@ import { Module } from '@nestjs/common';
 import { createObserveModule } from '@nestjs/observe';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
+import { ConfigModule } from '@nestjs/config';
+import configuration from './config/configuration.js';
+import { AuthModule } from '@thallesp/nestjs-better-auth';
+import { auth } from './common/auth/auth.js';
+import { PrismaModule } from './common/prisma.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -15,6 +20,15 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
       appSecret: process.env.OBSERVE_APP_SECRET ?? 'YOUR_APP_SECRET',
       serviceId: 'api',
     }),
+
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [configuration]
+    }),
+
+    AuthModule.forRoot({ auth }),
+
+    PrismaModule
   ],
   controllers: [AppController],
   providers: [AppService],
