@@ -14,7 +14,7 @@ async function bootstrap() {
   const PORT = config.getOrThrow<number>('PORT')
   const frontendOrigin = config.getOrThrow<string>('FRONTEND_URL')
 
-  app.setGlobalPrefix("api")
+  app.setGlobalPrefix("api", { exclude: ['/api/auth/{*path}'] })
 
   app.enableCors({
     origin: [frontendOrigin],

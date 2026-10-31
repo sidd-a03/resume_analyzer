@@ -5,23 +5,23 @@
   "main": "index.js",
   "exports": {
     ".": {
-      "types": "./src/index.ts",
+      "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.js",
       "default": "./dist/src/index.js"
     },
     "./client": {
-      "types": "./src/client.ts",
+      "types": "./dist/src/client.d.ts",
       "import": "./dist/src/client.js",
       "default": "./dist/src/client.js"
     }
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "prisma generate && tsc -p tsconfig.json",
+    "dev": "tsc -p tsconfig.json --watch --preserveWatchOutput",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "db:studio": "prisma studio",
-    "postinstall": "prisma generate"
+    "db:studio": "prisma studio"
   },
   "keywords": [],
   "author": "",
