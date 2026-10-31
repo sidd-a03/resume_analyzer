@@ -6,7 +6,7 @@ import { ConfigModule } from '@nestjs/config';
 import configuration from './config/configuration.js';
 import { AuthModule } from '@thallesp/nestjs-better-auth';
 import { auth } from './common/auth/auth.js';
-import { PrismaModule } from './common/prisma.module.js';
+import { PrismaModule } from './common/prisma/prisma.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
