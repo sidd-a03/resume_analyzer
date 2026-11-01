@@ -3,13 +3,8 @@
 import { motion } from "motion/react"
 
 import { NumberTicker } from "@/components/ui/number-ticker"
+import { scoreTone } from "@/lib/score"
 import { cn } from "@/lib/utils"
-
-export function scoreTone(score: number) {
-  if (score >= 75) return "text-success"
-  if (score >= 50) return "text-warning"
-  return "text-destructive"
-}
 
 interface ScoreRingProps {
   score: number

@@ -8,6 +8,7 @@ import { toast } from "sonner"
 import { providerMeta } from "@/components/auth/provider-meta"
 import { Button } from "@/components/ui/button"
 import { authClient, socialProviders, type SocialProvider } from "@/lib/auth-client"
+import { authErrorMessage } from "@/lib/auth-errors"
 import type { LinkedAccount } from "@/lib/session"
 
 const addedOn = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short", year: "numeric" })
@@ -25,10 +26,10 @@ export function ConnectedAccounts({ accounts }: { accounts: LinkedAccount[] }) {
     const { error } = await authClient.linkSocial({
       provider,
       callbackURL: `${settingsURL}?linked=${provider}`,
-      errorCallbackURL: settingsURL.toString(),
+      errorCallbackURL: `${settingsURL}?provider=${provider}`,
     })
     if (error) {
-      toast.error(error.message ?? "Couldn't start connecting. Please try again.")
+      toast.error(authErrorMessage(error, "Couldn't start connecting. Please try again."))
       setPending(null)
     }
   }
@@ -38,7 +39,7 @@ export function ConnectedAccounts({ accounts }: { accounts: LinkedAccount[] }) {
     const { error } = await authClient.unlinkAccount({ accountId: account.id })
     setPending(null)
     if (error) {
-      toast.error(error.message ?? "Couldn't disconnect. Please try again.")
+      toast.error(authErrorMessage(error, "Couldn't disconnect. Please try again."))
       return
     }
     toast.success(`${providerMeta[provider].label} disconnected`)

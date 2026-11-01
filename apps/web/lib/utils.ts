@@ -1,1 +1,5 @@
 export { cn } from "cn"
+
+export function first(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value
+}

@@ -168,6 +168,11 @@
   @apply mx-auto w-full max-w-[1200px] px-4 sm:px-6 lg:px-8;
 }
 
+/* Content column inside the signed-in app shell */
+@utility container-app {
+  @apply mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-10 lg:py-10;
+}
+
 @utility section-y {
   @apply py-20 lg:py-28;
 }
