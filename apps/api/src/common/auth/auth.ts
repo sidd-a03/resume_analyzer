@@ -1,20 +1,10 @@
-import { randomBytes } from "node:crypto";
 import { betterAuth, BetterAuthOptions } from "better-auth";
 import { APIError, createAuthMiddleware, getSessionFromCtx } from "better-auth/api";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { admin, captcha, lastLoginMethod, phoneNumber } from "better-auth/plugins";
 import { prisma } from "@repo/database";
+import { v7 as uuidv7 } from "uuid";
 import { ac, adminRole, regularRole, superadminRole } from "./permission.js";
-
-// UUIDv7 (RFC 9562): 48-bit ms timestamp first, so new ids sort after old ones
-function uuidv7() {
-    const bytes = randomBytes(16);
-    bytes.writeUIntBE(Date.now(), 0, 6);
-    bytes[6] = (bytes[6]! & 0x0f) | 0x70;
-    bytes[8] = (bytes[8]! & 0x3f) | 0x80;
-    const hex = bytes.toString("hex");
-    return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-${hex.slice(12, 16)}-${hex.slice(16, 20)}-${hex.slice(20)}`;
-}
 
 const INDIAN_MOBILE = /^\+91[6-9]\d{9}$/;
 
@@ -62,7 +52,7 @@ const authConfig = {
         backgroundTasks: {
             handler: (promise) => void promise,
         },
-        // user.id is a UUID column; a UUID string also fits the text ids of the other tables
+
         database: {
             generateId: () => uuidv7(),
         },

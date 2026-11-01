@@ -34,7 +34,8 @@
     "@thallesp/nestjs-better-auth": "^2.8.0",
     "better-auth": "^1.7.14",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "uuid": "^14.0.3"
   },
   "devDependencies": {
     "@nestjs/cli": "^12.0.0",
