@@ -29,6 +29,7 @@ model User {
   banReason           String?
   banExpires          DateTime?
   credits             Credit?
+  history             History[]
 
   @@unique([email])
   @@unique([phoneNumber])
@@ -42,6 +43,31 @@ model Credit {
   user    User   @relation(fields: [userId], references: [id])
 
   @@map("credit")
+}
+
+model History {
+  id        String         @id @default(uuid(7)) @db.Uuid
+  filename  String
+  type      AnalysisType
+  status    AnalysisStatus
+  createdAt DateTime       @default(now())
+  userId    String         @db.Uuid
+  user      User           @relation(fields: [userId], references: [id])
+
+  @@map("history")
+}
+
+enum AnalysisType {
+  PREVIEW
+  FULL
+  JOB_MATCH
+}
+
+enum AnalysisStatus {
+  QUEUED
+  RUNNING
+  SUCCEEDED
+  FAILED
 }
 
 model Session {
