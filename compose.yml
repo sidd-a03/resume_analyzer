@@ -1,6 +1,6 @@
 services:
   database:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     ports:
       - "5432:5432"
     environment:
@@ -10,7 +10,7 @@ services:
     restart: on-failure
     container_name: resume_container
     volumes:
-      - resume_volume:/var/lib/postgresql/data
+      - resume_volume:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U resume_analyzer -d resume_db"]
       interval: 1m30s
