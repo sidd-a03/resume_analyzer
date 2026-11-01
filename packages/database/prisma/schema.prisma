@@ -13,7 +13,7 @@ datasource db {
 }
 
 model User {
-  id                  String    @id
+  id                  String    @id @default(uuid(7)) @db.Uuid
   name                String
   email               String
   emailVerified       Boolean   @default(false)
@@ -24,15 +24,22 @@ model User {
   accounts            Account[]
   phoneNumber         String?
   phoneNumberVerified Boolean?
-
-  role       String?
-  banned     Boolean?  @default(false)
-  banReason  String?
-  banExpires DateTime?
+  role                String?
+  banned              Boolean?  @default(false)
+  banReason           String?
+  banExpires          DateTime?
+  credits             Credit?
 
   @@unique([email])
   @@unique([phoneNumber])
   @@map("user")
+}
+
+model Credit {
+  id      String @id @default(uuid(7)) @db.Uuid
+  credits Int    @default(0)
+  userId  String @unique @db.Uuid
+  user    User   @relation(fields: [userId], references: [id])
 }
 
 model Session {

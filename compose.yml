@@ -20,3 +20,4 @@ services:
 
 volumes:
   resume_volume:
+    name: resume_volume
