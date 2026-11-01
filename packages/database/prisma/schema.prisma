@@ -40,6 +40,8 @@ model Credit {
   credits Int    @default(0)
   userId  String @unique @db.Uuid
   user    User   @relation(fields: [userId], references: [id])
+
+  @@map("credit")
 }
 
 model Session {
