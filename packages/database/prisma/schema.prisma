@@ -13,23 +13,29 @@ datasource db {
 }
 
 model User {
-  id                  String    @id @default(uuid(7)) @db.Uuid
+  id                  String              @id @default(uuid(7)) @db.Uuid
   name                String
   email               String
-  emailVerified       Boolean   @default(false)
+  emailVerified       Boolean             @default(false)
   image               String?
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
   sessions            Session[]
   accounts            Account[]
   phoneNumber         String?
   phoneNumberVerified Boolean?
   role                String?
-  banned              Boolean?  @default(false)
+  banned              Boolean?            @default(false)
   banReason           String?
   banExpires          DateTime?
-  credits             Credit?
-  history             History[]
+  credit              Credit?
+  resumes             Resume[]
+  analyses            Analysis[]
+  transactions        CreditTransaction[] @relation("owner")
+  grantedCredits      CreditTransaction[] @relation("grantedBy")
+  payments            Payment[]
+  welcomeClaim        WelcomeClaim?
+  auditEntries        AuditLog[]
 
   @@unique([email])
   @@unique([phoneNumber])
@@ -37,24 +43,59 @@ model User {
 }
 
 model Credit {
-  id      String @id @default(uuid(7)) @db.Uuid
-  credits Int    @default(0)
-  userId  String @unique @db.Uuid
-  user    User   @relation(fields: [userId], references: [id])
+  id        String   @id @default(uuid(7)) @db.Uuid
+  balance   Int      @default(0)
+  updatedAt DateTime @updatedAt
+  userId    String   @unique @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("credit")
 }
 
-model History {
-  id        String         @id @default(uuid(7)) @db.Uuid
-  filename  String
-  type      AnalysisType
-  status    AnalysisStatus
-  createdAt DateTime       @default(now())
-  userId    String         @db.Uuid
-  user      User           @relation(fields: [userId], references: [id])
+model Resume {
+  id          String     @id @default(uuid(7)) @db.Uuid
+  fileName    String
+  fileKey     String
+  sizeBytes   Int
+  pages       Int
+  contentHash String
+  createdAt   DateTime   @default(now())
+  userId      String     @db.Uuid
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  analyses    Analysis[]
 
-  @@map("history")
+  @@unique([userId, contentHash])
+  @@index([contentHash])
+  @@index([userId, createdAt])
+  @@map("resume")
+}
+
+model Analysis {
+  id             String              @id @default(uuid(7)) @db.Uuid
+  type           AnalysisType
+  status         AnalysisStatus      @default(QUEUED)
+  inputHash      String
+  promptVersion  String
+  jobTitle       String?
+  jobDescription String?
+  score          Int?
+  result         Json?
+  error          String?
+  progressStep   Int                 @default(0)
+  creditsSpent   Int                 @default(0)
+  refunded       Boolean             @default(false)
+  createdAt      DateTime            @default(now())
+  completedAt    DateTime?
+  resumeId       String              @db.Uuid
+  resume         Resume              @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  userId         String              @db.Uuid
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions   CreditTransaction[]
+
+  @@unique([userId, type, inputHash, promptVersion])
+  @@index([userId, createdAt])
+  @@index([status])
+  @@map("analysis")
 }
 
 enum AnalysisType {
@@ -68,6 +109,105 @@ enum AnalysisStatus {
   RUNNING
   SUCCEEDED
   FAILED
+}
+
+model CreditTransaction {
+  id         String       @id @default(uuid(7)) @db.Uuid
+  delta      Int
+  reason     LedgerReason
+  note       String?
+  createdAt  DateTime     @default(now())
+  userId     String       @db.Uuid
+  user       User         @relation("owner", fields: [userId], references: [id], onDelete: Cascade)
+  analysisId String?      @db.Uuid
+  analysis   Analysis?    @relation(fields: [analysisId], references: [id], onDelete: SetNull)
+  paymentId  String?      @unique @db.Uuid 
+  payment    Payment?     @relation(fields: [paymentId], references: [id], onDelete: SetNull)
+  actorId    String?      @db.Uuid
+  actor      User?        @relation("grantedBy", fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@unique([analysisId, reason])
+  @@index([userId, createdAt])
+  @@map("credit_transaction")
+}
+
+enum LedgerReason {
+  WELCOME
+  PURCHASE
+  ANALYSIS
+  UNLOCK
+  REFUND
+  GRANT
+  REVOKE
+}
+
+model Payment {
+  id                String             @id @default(uuid(7)) @db.Uuid
+  pack              CreditPack
+  credits           Int
+  amountPaise       Int
+  currency          String             @default("INR")
+  status            PaymentStatus      @default(PENDING)
+  provider          String
+  providerOrderId   String             @unique
+  providerPaymentId String?            @unique
+  createdAt         DateTime           @default(now())
+  paidAt            DateTime?
+  userId            String?            @db.Uuid
+  user              User?              @relation(fields: [userId], references: [id], onDelete: SetNull)
+  transaction       CreditTransaction?
+
+  @@index([userId, createdAt])
+  @@map("payment")
+}
+
+enum CreditPack {
+  STARTER
+  STANDARD
+  PRO
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+model WelcomeClaim {
+  phoneNumber String   @id
+  claimedAt   DateTime @default(now())
+  userId      String?  @unique @db.Uuid
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@map("welcome_claim")
+}
+
+model AuditLog {
+  id         String      @id @default(uuid(7)) @db.Uuid
+  action     AuditAction
+  actorEmail String
+  actorRole  String
+  targetId   String?
+  detail     String?
+  createdAt  DateTime    @default(now())
+  actorId    String?     @db.Uuid
+  actor      User?       @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([actorId])
+  @@map("audit_log")
+}
+
+enum AuditAction {
+  USER_BAN
+  USER_UNBAN
+  USER_SET_ROLE
+  USER_IMPERSONATE
+  USER_DELETE
+  SESSION_REVOKE
+  CREDITS_GRANT
+  CREDITS_REVOKE
+  ANALYSIS_DELETE
 }
 
 model Session {
