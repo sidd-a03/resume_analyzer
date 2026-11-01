@@ -1,0 +1,16 @@
+{
+  "extends": "@repo/typescript-config/base.json",
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
+  "compilerOptions": {
+    "strictNullChecks": true,
+    "rootDir": ".",
+    "outDir": "./dist",
+    "types": ["node"],
+  }
+}
