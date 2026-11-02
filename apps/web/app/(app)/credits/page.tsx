@@ -3,25 +3,31 @@ import type { Metadata } from "next"
 import { Suspense } from "react"
 
 import { BuyPackButton } from "@/components/credits/buy-pack-button"
-import { LedgerTable } from "@/components/credits/ledger-table"
+import { LedgerHistory } from "@/components/credits/ledger-history"
 import { PaymentBanner } from "@/components/credits/payment-banner"
 import { PageHeader } from "@/components/shared/page-header"
 import { PricingCards } from "@/components/shared/pricing-cards"
 import { analysisTypes } from "@/constants/analysis"
 import { pricingNote } from "@/constants/pricing"
-import { creditBalance as balance, ledger, payments } from "@/constants/data"
+import { payments } from "@/constants/data"
+import { getCreditBalance, getCreditTransactions } from "@/lib/credits"
 import { requireUser } from "@/lib/session"
 import { first } from "@/lib/utils"
 
 export const metadata: Metadata = { title: "Credits" }
 
 async function CreditsContent({ searchParams }: { searchParams: PageProps<"/credits">["searchParams"] }) {
-  const [, params] = await Promise.all([requireUser(), searchParams])
+  const [, params, balance, ledger] = await Promise.all([
+    requireUser(),
+    searchParams,
+    getCreditBalance(),
+    getCreditTransactions(),
+  ])
   const paymentId = first(params.payment)
   // The landing page's pricing buttons link here with ?pack=
   const selectedPack = first(params.pack)
 
-  // TODO: serve actual data from the backend
+  // TODO: serve payments from the backend
   const payment = payments.find((p) => p.id === paymentId) ?? null
 
   return (
@@ -64,7 +70,7 @@ async function CreditsContent({ searchParams }: { searchParams: PageProps<"/cred
         <h2 id="ledger-heading" className="mb-4 text-lg font-semibold">
           Credit history
         </h2>
-        <LedgerTable entries={ledger} />
+        <LedgerHistory initial={ledger} />
       </section>
     </div>
   )

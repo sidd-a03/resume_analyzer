@@ -18,7 +18,6 @@ import type {
   Resume,
 } from "@/lib/types"
 
-export const creditBalance = 3
 
 export const onboarding: Omit<Onboarding, "phoneVerified"> = {
   uploaded: true,
@@ -284,4 +283,4 @@ export const auditLog: AuditEntry[] = [
 ]
 
 /** Per-user credit balances for the user page */
-export const userCreditBalances: Record<string, number> = { [riya.id]: creditBalance, [arjun.id]: 13, [sneha.id]: 4, [demo.id]: 0 }
+export const userCreditBalances: Record<string, number> = { [riya.id]: 3, [arjun.id]: 13, [sneha.id]: 4, [demo.id]: 0 }

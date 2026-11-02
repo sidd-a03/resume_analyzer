@@ -57,7 +57,9 @@ export function Topbar({ area = "app" }: { area?: "app" | "admin" }) {
             <Suspense fallback={null}>
               <AdminLink />
             </Suspense>
-            <CreditChip />
+            <Suspense fallback={<div className="h-8 w-14 animate-pulse rounded-full bg-muted" aria-hidden="true" />}>
+              <CreditChip />
+            </Suspense>
           </>
         ) : (
           <Suspense fallback={null}>

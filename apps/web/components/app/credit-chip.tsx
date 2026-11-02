@@ -1,10 +1,10 @@
 import { Coins } from "lucide-react"
 import Link from "next/link"
 
-import { creditBalance as balance } from "@/constants/data"
+import { getCreditBalance } from "@/lib/credits"
 
-// TODO: serve the actual balance from the backend
-export function CreditChip() {
+export async function CreditChip() {
+  const balance = await getCreditBalance()
   return (
     <Link
       href="/credits"

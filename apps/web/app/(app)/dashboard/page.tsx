@@ -7,13 +7,14 @@ import { OnboardingChecklist } from "@/components/dashboard/onboarding-checklist
 import { RecentAnalyses } from "@/components/dashboard/recent-analyses"
 import { PageHeader } from "@/components/shared/page-header"
 import { RefreshWhile } from "@/components/shared/refresh-while"
-import { analyses, creditBalance, onboarding } from "@/constants/data"
+import { analyses, onboarding } from "@/constants/data"
+import { getCreditBalance } from "@/lib/credits"
 import { requireUser } from "@/lib/session"
 
 export const metadata: Metadata = { title: "Dashboard" }
 
 async function DashboardContent() {
-  const user = await requireUser()
+  const [user, balance] = await Promise.all([requireUser(), getCreditBalance()])
   // TODO: serve actual data from the backend
   const recent = analyses.slice(0, 5)
   const firstName = user.name.split(" ")[0] || "there"
@@ -25,7 +26,7 @@ async function DashboardContent() {
 
       <div className="mt-8 grid gap-4 lg:grid-cols-[1.6fr_1fr]">
         <NewAnalysisCard />
-        <CreditsCard balance={creditBalance} />
+        <CreditsCard balance={balance} />
       </div>
 
       <div className="mt-6">

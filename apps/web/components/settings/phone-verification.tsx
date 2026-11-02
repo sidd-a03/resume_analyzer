@@ -10,12 +10,15 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { captchaHeaders, TurnstileWidget, useTurnstile } from "@/components/widget/turnstile-widget"
 import { authClient } from "@/lib/auth-client"
+import { countryOptions, nationalPhoneSchema, type SupportedCountry } from "@repo/validation"
 import { authErrorMessage } from "@/lib/auth-errors"
 
 const RESEND_AFTER = 30
-const indianMobile = /^[6-9]\d{9}$/
+
+const countryItems = countryOptions.map((c) => ({ value: c.code, label: `${c.flag} ${c.callingCode}` }))
 
 function maskPhone(phone: string) {
   return `${phone.slice(0, 5)} •••• ${phone.slice(-2)}`
@@ -30,13 +33,17 @@ export function PhoneVerification({
 }) {
   const router = useRouter()
   const { ref: captchaRef, token, setToken, reset: resetCaptcha } = useTurnstile()
+  const [country, setCountry] = useState<SupportedCountry>(countryOptions[0]!.code)
   const [digits, setDigits] = useState("")
+  const [touched, setTouched] = useState(false)
   const [sentTo, setSentTo] = useState<string | null>(null)
   const [code, setCode] = useState("")
   const [cooldown, setCooldown] = useState(0)
   const [busy, setBusy] = useState<"send" | "verify" | null>(null)
 
   const counting = cooldown > 0
+  // The same schema the API checks, so a number that passes here isn't rejected there
+  const parsed = nationalPhoneSchema.safeParse({ country, number: digits })
   useEffect(() => {
     if (!counting) return
     const timer = setInterval(() => setCooldown((s) => Math.max(0, s - 1)), 1000)
@@ -84,7 +91,7 @@ export function PhoneVerification({
         Phone verification
       </h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Verify an Indian mobile number to claim your free welcome credit. One number per account.
+        Verify your mobile number to claim your free welcome credit. One number per account.
       </p>
 
       {verifiedNumber ? (
@@ -101,27 +108,43 @@ export function PhoneVerification({
           className="mt-6 flex flex-col gap-4"
           onSubmit={(event) => {
             event.preventDefault()
-            if (indianMobile.test(digits)) sendCode(`+91${digits}`)
+            if (parsed.success) sendCode(parsed.data)
           }}
         >
           <div>
             <Label htmlFor="phone-input">Mobile number</Label>
             <div className="mt-2 flex max-w-xs items-center overflow-hidden rounded-lg border bg-background focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
-              <span className="border-r px-3 font-mono text-sm text-muted-foreground">+91</span>
+              {countryItems.length === 1 ? (
+                <span className="border-r px-3 font-mono text-sm text-muted-foreground">{countryItems[0]!.label}</span>
+              ) : (
+                <Select items={countryItems} value={country} onValueChange={(value) => setCountry(value as SupportedCountry)}>
+                  <SelectTrigger aria-label="Country" className="rounded-none border-0 border-r font-mono">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {countryItems.map((item) => (
+                      <SelectItem key={item.value} value={item.value}>
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               <Input
                 id="phone-input"
                 inputMode="numeric"
                 autoComplete="tel-national"
                 placeholder="98765 43210"
                 value={digits}
-                onChange={(event) => setDigits(event.target.value.replace(/\D/g, "").slice(0, 10))}
+                onChange={(event) => setDigits(event.target.value.replace(/\D/g, "").slice(0, 15))}
+                onBlur={() => setTouched(true)}
                 className="border-0 font-mono focus-visible:ring-0"
-                aria-invalid={digits.length === 10 && !indianMobile.test(digits)}
+                aria-invalid={touched && digits.length > 0 && !parsed.success}
               />
             </div>
           </div>
           <TurnstileWidget ref={captchaRef} onToken={setToken} className="max-w-xs" />
-          <Button type="submit" className="self-start" disabled={!indianMobile.test(digits) || !token || busy !== null}>
+          <Button type="submit" className="self-start" disabled={!parsed.success || !token || busy !== null}>
             {busy === "send" && <Loader2 className="animate-spin" />}
             {token ? "Send code" : "Checking you're human…"}
           </Button>

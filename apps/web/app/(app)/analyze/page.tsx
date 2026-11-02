@@ -3,7 +3,8 @@ import { Suspense } from "react"
 
 import { AnalyzeFlow } from "@/components/analyze/analyze-flow"
 import { PageHeader } from "@/components/shared/page-header"
-import { analyses, creditBalance, resumes } from "@/constants/data"
+import { analyses, resumes } from "@/constants/data"
+import { getCreditBalance } from "@/lib/credits"
 import type { AnalysisType } from "@/lib/types"
 import { requireUser } from "@/lib/session"
 import { first } from "@/lib/utils"
@@ -13,7 +14,7 @@ export const metadata: Metadata = { title: "New analysis" }
 const types: AnalysisType[] = ["preview", "full", "job_match"]
 
 async function AnalyzeContent({ searchParams }: { searchParams: PageProps<"/analyze">["searchParams"] }) {
-  const [, params] = await Promise.all([requireUser(), searchParams])
+  const [, params, balance] = await Promise.all([requireUser(), searchParams, getCreditBalance()])
   const resumeId = first(params.resume)
   const requestedType = first(params.type) as AnalysisType | undefined
 
@@ -32,7 +33,7 @@ async function AnalyzeContent({ searchParams }: { searchParams: PageProps<"/anal
 
   return (
     <AnalyzeFlow
-      balance={creditBalance}
+      balance={balance}
       initialResume={initialResume}
       initialType={requestedType && types.includes(requestedType) ? requestedType : "preview"}
     />

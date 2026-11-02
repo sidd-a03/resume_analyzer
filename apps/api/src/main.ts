@@ -1,10 +1,11 @@
 import { NestFactory } from '@nestjs/core';
+import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule, ObserveInstrument } from './app.module.js';
 import { ConfigService } from '@nestjs/config';
-import { removeAllListeners } from 'process';
+import { StandardSchemaValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     instrument: ObserveInstrument,
     bodyParser: false
   });
@@ -13,6 +14,9 @@ async function bootstrap() {
 
   const PORT = config.getOrThrow<number>('PORT')
   const frontendOrigin = config.getOrThrow<string>('FRONTEND_URL')
+
+  const trustProxy = config.get<string>('TRUST_PROXY')
+  if (trustProxy) app.set('trust proxy', /^\d+$/.test(trustProxy) ? Number(trustProxy) : trustProxy)
 
   app.setGlobalPrefix("api", { exclude: ['/api/auth/{*path}'] })
 
@@ -27,6 +31,8 @@ async function bootstrap() {
   })
 
   app.enableShutdownHooks()
+
+  app.useGlobalPipes(new StandardSchemaValidationPipe())
 
   await app.listen(PORT);
 }

@@ -4,9 +4,8 @@ import { prismaAdapter } from "better-auth/adapters/prisma";
 import { admin, captcha, lastLoginMethod, phoneNumber } from "better-auth/plugins";
 import { prisma } from "@repo/database";
 import { v7 as uuidv7 } from "uuid";
+import { e164PhoneSchema } from "@repo/validation";
 import { ac, adminRole, regularRole, superadminRole } from "./permission.js";
-
-const INDIAN_MOBILE = /^\+91[6-9]\d{9}$/;
 
 const OTP_QUOTA = { windowMs: 60 * 60 * 1000, perUser: 5, perNumber: 5 };
 
@@ -122,7 +121,8 @@ const authConfig = {
             },
         }),
         phoneNumber({
-            phoneNumberValidator: (phoneNumber) => INDIAN_MOBILE.test(phoneNumber),
+            // Same rule as the web form: a supported country's mobile, in E.164
+            phoneNumberValidator: (phoneNumber) => e164PhoneSchema.safeParse(phoneNumber).success,
             sendOTP: async ({ phoneNumber, code }, ctx) => {
                 const owner = await prisma.user.findUnique({ where: { phoneNumber }, select: { id: true } });
                 const caller = ctx ? await getSessionFromCtx(ctx) : null;

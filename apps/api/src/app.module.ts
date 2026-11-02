@@ -9,6 +9,8 @@ import { auth } from './common/auth/auth.js';
 import { PrismaModule } from './common/prisma/prisma.module.js';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TransformInterceptor } from './utils/transform.interceptor.js';
+import { CreditsModule } from './credits/credits.module.js';
+import { RateLimitModule } from './common/throttler/rate-limit.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -30,7 +32,12 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
     AuthModule.forRoot({ auth }),
 
-    PrismaModule
+    RateLimitModule,
+
+    PrismaModule,
+
+    CreditsModule,
+
   ],
   controllers: [AppController],
   providers: [

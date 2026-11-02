@@ -3,7 +3,16 @@
 import { redirect } from "next/navigation"
 
 import { creditPacks, type CreditPack } from "@/constants/pricing"
+import { getCreditTransactions } from "@/lib/credits"
+import { ledgerQuerySchema } from "@repo/validation"
 import { getSessionUser, requireUser } from "@/lib/session"
+
+/** The next page of the credit history, for "Load more". Server actions are public endpoints, so the cursor is checked like any input. */
+export async function loadMoreTransactions(cursor: string) {
+  const query = ledgerQuerySchema.safeParse({ cursor })
+  if (!query.success) return { items: [], nextCursor: null }
+  return getCreditTransactions(query.data.cursor)
+}
 
 export async function startCheckout(packId: CreditPack["id"]) {
   await requireUser()
