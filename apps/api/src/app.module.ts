@@ -7,6 +7,8 @@ import configuration from './config/configuration.js';
 import { AuthModule } from '@thallesp/nestjs-better-auth';
 import { auth } from './common/auth/auth.js';
 import { PrismaModule } from './common/prisma/prisma.module.js';
+import { APP_INTERCEPTOR } from '@nestjs/core';
+import { TransformInterceptor } from './utils/transform.interceptor.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -31,6 +33,12 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     PrismaModule
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService, 
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: TransformInterceptor,
+    },
+  ],
 })
 export class AppModule {}
