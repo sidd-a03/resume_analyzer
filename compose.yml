@@ -17,7 +17,26 @@ services:
       timeout: 30s
       retries: 5
       start_period: 30s
+  
+  redis:
+    image: redis:7-alpine
+    container_name: redis_resume_container
+    ports:
+      - "6379:6379"
+    environment:
+      - REDIS_PASSWORD=myredispassword
+    command: ["sh", "-c", "exec redis-server --requirepass \"$$REDIS_PASSWORD\" --appendonly yes --maxmemory-policy noeviction"]
+    volumes:
+      - redis_resume_volume:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   resume_volume:
     name: resume_volume
+  redis_resume_volume:
+    name: redis_resume_volume
