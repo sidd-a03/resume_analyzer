@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule, ObserveInstrument } from './app.module.js';
 import { ConfigService } from '@nestjs/config';
+import type { AppConfig } from './config/configuration.js';
 import { StandardSchemaValidationPipe } from '@nestjs/common';
 
 async function bootstrap() {
@@ -10,12 +11,12 @@ async function bootstrap() {
     bodyParser: false
   });
 
-  const config = app.get(ConfigService)
+  const config = app.get<ConfigService<AppConfig, true>>(ConfigService)
 
-  const PORT = config.getOrThrow<number>('PORT')
-  const frontendOrigin = config.getOrThrow<string>('FRONTEND_URL')
+  const PORT = config.getOrThrow('port', { infer: true })
+  const frontendOrigin = config.getOrThrow('frontendUrl', { infer: true })
 
-  const trustProxy = config.get<string>('TRUST_PROXY')
+  const trustProxy = config.get('trustProxy', { infer: true })
   if (trustProxy) app.set('trust proxy', /^\d+$/.test(trustProxy) ? Number(trustProxy) : trustProxy)
 
   app.setGlobalPrefix("api", { exclude: ['/api/auth/{*path}'] })

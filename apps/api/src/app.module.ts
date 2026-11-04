@@ -2,10 +2,11 @@ import { Module } from '@nestjs/common';
 import { createObserveModule } from '@nestjs/observe';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
-import { ConfigModule } from '@nestjs/config';
-import configuration from './config/configuration.js';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import configuration, { type AppConfig } from './config/configuration.js';
+import { validateEnv } from './config/env.js';
 import { AuthModule } from '@thallesp/nestjs-better-auth';
-import { auth } from './common/auth/auth.js';
+import { createAuth } from './common/auth/auth.js';
 import { PrismaModule } from './common/prisma/prisma.module.js';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TransformInterceptor } from './utils/transform.interceptor.js';
@@ -28,10 +29,14 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
     ConfigModule.forRoot({
       isGlobal: true,
+      validate: validateEnv,
       load: [configuration]
     }),
 
-    AuthModule.forRoot({ auth }),
+    AuthModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService<AppConfig, true>) => ({ auth: createAuth(config) }),
+    }),
 
     RateLimitModule,
 
