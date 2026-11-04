@@ -11,6 +11,7 @@ import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TransformInterceptor } from './utils/transform.interceptor.js';
 import { CreditsModule } from './credits/credits.module.js';
 import { RateLimitModule } from './common/throttler/rate-limit.module.js';
+import { UploadsModule } from './uploads/uploads.module.js';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
 
@@ -37,6 +38,8 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     PrismaModule,
 
     CreditsModule,
+
+    UploadsModule,
 
   ],
   controllers: [AppController],
