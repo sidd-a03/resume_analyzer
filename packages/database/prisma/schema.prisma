@@ -55,10 +55,11 @@ model Credit {
 model Resume {
   id          String     @id @default(uuid(7)) @db.Uuid
   fileName    String
-  fileKey     String
   sizeBytes   Int
   pages       Int
-  contentHash String
+  contentHash String 
+  textContent String?
+  expiresAt   DateTime
   createdAt   DateTime   @default(now())
   userId      String     @db.Uuid
   user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -67,6 +68,7 @@ model Resume {
   @@unique([userId, contentHash])
   @@index([contentHash])
   @@index([userId, createdAt])
+  @@index([expiresAt])
   @@map("resume")
 }
 
@@ -174,7 +176,7 @@ enum PaymentStatus {
 }
 
 model WelcomeClaim {
-  phoneNumber String   @id
+  phoneHash   String   @id
   claimedAt   DateTime @default(now())
   userId      String?  @unique @db.Uuid
   user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
