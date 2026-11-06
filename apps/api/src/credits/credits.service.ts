@@ -7,12 +7,19 @@ export class CreditsService {
     constructor(private readonly prisma: PrismaService) {}
 
     async getBalance(userId: string) {
-        const credit = await this.prisma.credit.findUnique({
-            where: { userId },
-            select: { balance: true },
-        });
+        const [credit, welcomeClaim] = await Promise.all([
+            this.prisma.credit.findUnique({ 
+                where: { userId }, 
+                select: { balance: true } 
+            }),
 
-        return { balance: credit?.balance ?? 0 };
+            this.prisma.welcomeClaim.findUnique({ 
+                where: { userId }, 
+                select: { id: true } 
+            }),
+        ]);
+
+        return { balance: credit?.balance ?? 0, welcomeClaimed: welcomeClaim !== null };
     }
 
     async getTransactions(userId: string, cursor?: string, limit: number = LEDGER_PAGE_SIZE.default) {
