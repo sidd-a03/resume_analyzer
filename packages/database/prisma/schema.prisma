@@ -187,6 +187,8 @@ model WelcomeClaim {
   @@index([deviceHash])
   @@index([ipHash])
   @@index([claimedAt])
+  // GIN: lets "any of these hashes" (hasSome) use an index instead of scanning every claim
+  @@index([identityHashes], type: Gin)
   @@map("welcome_claim")
 }
 
