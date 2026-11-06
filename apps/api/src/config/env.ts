@@ -10,6 +10,8 @@ export const envSchema = z.object({
     TRUST_PROXY: optional,
     CLIENT_IP_HEADER: optional,
 
+    COOKIE_DOMAIN: optional,
+
     OBSERVE_APP_KEY: optional,
     OBSERVE_APP_SECRET: optional,
 
@@ -29,7 +31,8 @@ export const envSchema = z.object({
     RAZORPAY_KEY_ID: optional,
     RAZORPAY_KEY_SECRET: optional,
 
-    PHONE_HASH_SECRET: z.string().min(32, 'must be at least 32 characters'),
+    RISK_HASH_SECRET: z.string().min(32, 'must be at least 32 characters'),
+    WELCOME_DAILY_CAP: z.coerce.number().int().nonnegative().default(200),
     RETENTION_DAYS: z.coerce.number().int().positive().default(7),
 
     REDIS_HOST: required,

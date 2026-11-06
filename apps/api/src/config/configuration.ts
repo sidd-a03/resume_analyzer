@@ -18,6 +18,7 @@ const configuration = () => {
             secret: env.BETTER_AUTH_SECRET,
             url: env.BETTER_AUTH_URL,
             clientIpHeader: env.CLIENT_IP_HEADER,
+            cookieDomain: env.COOKIE_DOMAIN,
             google: { 
                 clientId: env.GOOGLE_CLIENT_ID, 
                 clientSecret: env.GOOGLE_CLIENT_SECRET 
@@ -40,8 +41,9 @@ const configuration = () => {
         retention: {
             days: env.RETENTION_DAYS,
         },
-        phoneHash: {
-            secret: env.PHONE_HASH_SECRET,
+        welcome: {
+            riskHashSecret: env.RISK_HASH_SECRET,
+            dailyCap: env.WELCOME_DAILY_CAP,
         },
     };
 };

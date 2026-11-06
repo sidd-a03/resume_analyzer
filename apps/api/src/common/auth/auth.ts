@@ -61,8 +61,17 @@ function authOptions(config: ConfigService<AppConfig, true>) {
             database: {
                 generateId: () => uuidv7(),
             },
+            
+            crossSubDomainCookies: env.cookieDomain ? { enabled: true, domain: env.cookieDomain } : undefined,
         },
-        disabledPaths: ["/sign-in/phone-number", "/phone-number/request-password-reset", "/phone-number/reset-password"],
+
+        disabledPaths: [
+            "/sign-in/phone-number",
+            "/phone-number/request-password-reset",
+            "/phone-number/reset-password",
+            "/phone-number/send-otp",
+            "/phone-number/verify",
+        ],
         hooks: {
             before: createAuthMiddleware(async (ctx) => {
                 if (ctx.path === "/phone-number/send-otp") {
@@ -77,6 +86,24 @@ function authOptions(config: ConfigService<AppConfig, true>) {
 
                 if (ctx.path === "/phone-number/verify" && ctx.body?.updatePhoneNumber !== true) {
                     throw new APIError("BAD_REQUEST", { message: "Invalid request" });
+                }
+
+                if (ctx.path === "/link-social") {
+                    const session = await getSessionFromCtx(ctx);
+                    const providerId = String(ctx.body?.provider ?? "");
+                    if (
+                        session 
+                        && 
+                        await prisma.account.findFirst({ 
+                            where: { userId: session.user.id, providerId }, 
+                            select: { id: true } 
+                        })
+                    ) {
+                        throw new APIError("CONFLICT", {
+                            message: "You already have an account from this provider connected. Disconnect it first.",
+                            code: "PROVIDER_ALREADY_CONNECTED",
+                        });
+                    }
                 }
             }),
         },
