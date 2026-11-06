@@ -176,11 +176,17 @@ enum PaymentStatus {
 }
 
 model WelcomeClaim {
-  phoneHash   String   @id
-  claimedAt   DateTime @default(now())
-  userId      String?  @unique @db.Uuid
-  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  id             String   @id @default(uuid(7)) @db.Uuid
+  userId         String?  @unique @db.Uuid
+  user           User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  deviceHash     String?
+  ipHash         String?
+  identityHashes String[]
+  claimedAt      DateTime @default(now())
 
+  @@index([deviceHash])
+  @@index([ipHash])
+  @@index([claimedAt])
   @@map("welcome_claim")
 }
 
@@ -246,6 +252,7 @@ model Account {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 
+  @@unique([userId, providerId])
   @@index([userId])
   @@map("account")
 }
