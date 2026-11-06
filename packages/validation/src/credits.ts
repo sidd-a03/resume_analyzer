@@ -9,3 +9,5 @@ export const ledgerQuerySchema = z.object({
 });
 
 export type LedgerQuery = z.infer<typeof ledgerQuerySchema>;
+
+export const WELCOME_CREDITS = 1;
