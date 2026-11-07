@@ -8,7 +8,11 @@ import { StandardSchemaValidationPipe } from '@nestjs/common';
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     instrument: ObserveInstrument,
-    bodyParser: false
+    bodyParser: false,
+    routeConflictPolicy: { 
+      duplicate: 'error', 
+      shadow: 'warn' 
+    },
   });
 
   const config = app.get<ConfigService<AppConfig, true>>(ConfigService)
