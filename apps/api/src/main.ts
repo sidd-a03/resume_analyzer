@@ -15,6 +15,8 @@ async function bootstrap() {
     },
   });
 
+  app.useSecurityHeaders()
+
   const config = app.get<ConfigService<AppConfig, true>>(ConfigService)
 
   const PORT = config.getOrThrow('port', { infer: true })
