@@ -21,7 +21,7 @@ async function bootstrap() {
 
   app.use(CacheControlMiddleware)
 
- app.set('etag', false)
+  app.set('etag', false)
 
   const config = app.get<ConfigService<AppConfig, true>>(ConfigService)
 
