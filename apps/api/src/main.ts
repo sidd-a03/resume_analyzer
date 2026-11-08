@@ -1,9 +1,11 @@
 import { NestFactory } from '@nestjs/core';
 import type { NestExpressApplication } from '@nestjs/platform-express';
+import type { NextFunction, Request, Response } from 'express';
 import { AppModule, ObserveInstrument } from './app.module.js';
 import { ConfigService } from '@nestjs/config';
 import type { AppConfig } from './config/configuration.js';
 import { StandardSchemaValidationPipe } from '@nestjs/common';
+import { CacheControlMiddleware } from './common/middleware/cache-control/cache-control.middleware.js';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -16,6 +18,10 @@ async function bootstrap() {
   });
 
   app.useSecurityHeaders()
+
+  app.use(CacheControlMiddleware)
+
+ app.set('etag', false)
 
   const config = app.get<ConfigService<AppConfig, true>>(ConfigService)
 
