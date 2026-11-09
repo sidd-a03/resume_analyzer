@@ -6,9 +6,7 @@ import { AppearanceCard } from "@/components/settings/appearance-card"
 import { ConnectedAccounts } from "@/components/settings/connected-accounts"
 import { DataPrivacy } from "@/components/settings/data-privacy"
 import { LinkResultToast } from "@/components/settings/link-result-toast"
-import { PhoneVerification } from "@/components/settings/phone-verification"
 import { ProfileCard } from "@/components/settings/profile-card"
-import { onboarding } from "@/constants/data"
 import { listLinkedAccounts, requireUser } from "@/lib/session"
 import { first } from "@/lib/utils"
 
@@ -22,10 +20,6 @@ async function SettingsContent({ searchParams }: { searchParams: PageProps<"/set
       <LinkResultToast linked={first(params.linked)} provider={first(params.provider)} error={first(params.error)} />
       <ProfileCard user={user} />
       <ConnectedAccounts accounts={accounts} />
-      <PhoneVerification
-        verifiedNumber={user.phoneNumberVerified ? user.phoneNumber : null}
-        welcomeClaimed={onboarding.welcomeClaimed} // TODO: serve actual data from the backend
-      />
       <AppearanceCard />
       <DataPrivacy />
     </div>
