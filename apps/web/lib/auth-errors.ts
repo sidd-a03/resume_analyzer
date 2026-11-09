@@ -23,6 +23,7 @@ const messages: Record<string, string> = {
   FAILED_TO_UNLINK_LAST_ACCOUNT: "You need at least one way to sign in. Connect another account first.",
   ACCOUNT_NOT_FOUND: "That account isn't connected anymore. Refresh the page.",
   SOCIAL_ACCOUNT_ALREADY_LINKED: "That account is already connected.",
+  PROVIDER_ALREADY_CONNECTED: "You already have one connected. Disconnect it first to switch accounts.",
   // admin
   YOU_CANNOT_BAN_YOURSELF: "You can't ban yourself.",
   YOU_CANNOT_REMOVE_YOURSELF: "You can't delete yourself.",
