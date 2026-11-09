@@ -19,9 +19,8 @@ import type {
 } from "@/lib/types"
 
 
-export const onboarding: Omit<Onboarding, "phoneVerified"> = {
+export const onboarding: Omit<Onboarding, "welcomeClaimed"> = {
   uploaded: true,
-  welcomeClaimed: false,
   triedJobMatch: true,
 }
 
