@@ -88,7 +88,6 @@ export interface Payment {
 
 export interface Onboarding {
   uploaded: boolean
-  phoneVerified: boolean
   welcomeClaimed: boolean
   triedJobMatch: boolean
 }
