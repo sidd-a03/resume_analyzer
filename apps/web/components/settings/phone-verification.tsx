@@ -115,10 +115,12 @@ export function PhoneVerification({
             <Label htmlFor="phone-input">Mobile number</Label>
             <div className="mt-2 flex max-w-xs items-center overflow-hidden rounded-lg border bg-background focus-within:border-ring focus-within:ring-3 focus-within:ring-ring/50">
               {countryItems.length === 1 ? (
-                <span className="border-r px-3 font-mono text-sm text-muted-foreground">{countryItems[0]!.label}</span>
+                <span className="flex shrink-0 items-center gap-1.5 self-stretch whitespace-nowrap border-r px-3 font-mono text-sm text-muted-foreground">
+                  {countryItems[0]!.label}
+                </span>
               ) : (
                 <Select items={countryItems} value={country} onValueChange={(value) => setCountry(value as SupportedCountry)}>
-                  <SelectTrigger aria-label="Country" className="rounded-none border-0 border-r font-mono">
+                  <SelectTrigger aria-label="Country" className="shrink-0 rounded-none border-0 border-r font-mono">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
