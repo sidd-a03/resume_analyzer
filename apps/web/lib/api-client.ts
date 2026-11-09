@@ -8,9 +8,9 @@ export type ApiEnvelope<T> = {
 }
 
 
-export async function apiClientFetch<T>(path: string): Promise<T> {
+export async function apiClientFetch<T>(path: string, init?: RequestInit): Promise<T> {
 
-  const res = await fetch(`${apiBaseURL}${path}`, { credentials: "include" })
+  const res = await fetch(`${apiBaseURL}${path}`, { ...init, credentials: "include" })
 
   if (!res.ok) {
     const body = (await res.json().catch(() => null)) as { message?: string | string[] } | null
