@@ -3,7 +3,7 @@
 import { redirect } from "next/navigation"
 
 import { creditPacks, type CreditPack } from "@/constants/pricing"
-import { getSessionUser, requireUser } from "@/lib/session"
+import { requireUser } from "@/lib/session"
 
 export async function startCheckout(packId: CreditPack["id"]) {
   await requireUser()
@@ -12,13 +12,4 @@ export async function startCheckout(packId: CreditPack["id"]) {
   // TODO: ask the backend to create a Razorpay order for packId (it reads the price, never the client),
   // open Razorpay Checkout, then land on /credits?payment=<id> to poll for confirmation
   redirect("/credits?payment=sample-pending")
-}
-
-export async function claimWelcomeCredit() {
-  const user = await getSessionUser()
-  if (!user) return { ok: false as const, message: "Your session expired. Sign in again." }
-  if (!user.phoneNumberVerified) return { ok: false as const, message: "Verify your phone number first." }
-
-  // TODO: ask the backend to grant the welcome credit once per verified phone, then refresh()
-  return { ok: false as const, message: "Welcome credits aren't connected to the backend yet." }
 }
