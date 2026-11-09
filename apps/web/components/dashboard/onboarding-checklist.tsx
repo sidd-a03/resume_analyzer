@@ -29,7 +29,7 @@ const linkClass = "text-sm font-medium underline underline-offset-4 decoration-p
 
 /** Shown until every step is done. */
 export function OnboardingChecklist({ onboarding }: { onboarding: Onboarding }) {
-  const { uploaded, phoneVerified, welcomeClaimed, triedJobMatch } = onboarding
+  const { uploaded, welcomeClaimed, triedJobMatch } = onboarding
   if (uploaded && welcomeClaimed && triedJobMatch) return null
 
   const doneCount = [uploaded, welcomeClaimed, triedJobMatch].filter(Boolean).length
@@ -49,14 +49,8 @@ export function OnboardingChecklist({ onboarding }: { onboarding: Onboarding }) 
             Upload now
           </Link>
         </Step>
-        <Step done={welcomeClaimed} index={2} title="Verify your phone to claim your welcome credit">
-          {phoneVerified ? (
-            <ClaimWelcomeButton />
-          ) : (
-            <Link href="/settings#phone" className={linkClass}>
-              Verify phone
-            </Link>
-          )}
+        <Step done={welcomeClaimed} index={2} title="Claim your welcome credit">
+          <ClaimWelcomeButton />
         </Step>
         <Step done={triedJobMatch} index={3} title="Try a job description match">
           <Link href="/analyze?type=job_match" className={linkClass}>
