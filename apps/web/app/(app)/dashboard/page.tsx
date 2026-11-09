@@ -8,13 +8,13 @@ import { RecentAnalyses } from "@/components/dashboard/recent-analyses"
 import { PageHeader } from "@/components/shared/page-header"
 import { RefreshWhile } from "@/components/shared/refresh-while"
 import { analyses, onboarding } from "@/constants/data"
-import { getCreditBalance } from "@/lib/credits"
+import { getCredits } from "@/lib/credits"
 import { requireUser } from "@/lib/session"
 
 export const metadata: Metadata = { title: "Dashboard" }
 
 async function DashboardContent() {
-  const [user, balance] = await Promise.all([requireUser(), getCreditBalance()])
+  const [user, { balance, welcomeClaimed }] = await Promise.all([requireUser(), getCredits()])
   // TODO: serve actual data from the backend
   const recent = analyses.slice(0, 5)
   const firstName = user.name.split(" ")[0] || "there"
@@ -30,7 +30,7 @@ async function DashboardContent() {
       </div>
 
       <div className="mt-6">
-        <OnboardingChecklist onboarding={{ ...onboarding, phoneVerified: Boolean(user.phoneNumberVerified) }} />
+        <OnboardingChecklist onboarding={{ ...onboarding, welcomeClaimed }} />
       </div>
 
       <div className="mt-10">
