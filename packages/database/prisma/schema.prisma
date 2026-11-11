@@ -84,6 +84,9 @@ model Analysis {
   result         Json?
   error          String?
   progressStep   Int                 @default(0)
+  model          String?
+  inputTokens    Int?
+  outputTokens   Int?
   creditsSpent   Int                 @default(0)
   refunded       Boolean             @default(false)
   createdAt      DateTime            @default(now())
@@ -96,6 +99,8 @@ model Analysis {
 
   @@unique([userId, type, inputHash, promptVersion])
   @@index([userId, createdAt])
+
+  @@index([type, inputHash])
   @@index([status])
   @@map("analysis")
 }
