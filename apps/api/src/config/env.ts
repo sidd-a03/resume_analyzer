@@ -1,7 +1,8 @@
 import { z } from 'zod';
 
 const required = z.string().trim().min(1, 'is required');
-const optional = z.string().trim().min(1).optional();
+// An empty value (KEY=) counts as unset
+const optional = z.preprocess((v) => (typeof v === 'string' && v.trim() === '' ? undefined : v), z.string().trim().min(1).optional());
 
 export const envSchema = z.object({
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
@@ -38,6 +39,12 @@ export const envSchema = z.object({
     REDIS_HOST: required,
     REDIS_PORT: z.coerce.number().int().positive(),
     REDIS_PASSWORD: required,
+    
+    QUEUE_PREFIX: z.string().trim().min(1).default('bull'),
+
+    GEMINI_API_KEY: optional,
+    GEMINI_MODEL_PREVIEW: z.string().trim().min(1).default('gemini-flash-lite-latest'),
+    GEMINI_MODEL_FULL: z.string().trim().min(1).default('gemini-flash-latest'),
 });
 
 export type Env = z.infer<typeof envSchema>;

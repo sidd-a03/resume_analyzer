@@ -38,12 +38,18 @@ const configuration = () => {
             port: env.REDIS_PORT,
             password: env.REDIS_PASSWORD,
         },
+        queuePrefix: env.QUEUE_PREFIX,
         retention: {
             days: env.RETENTION_DAYS,
         },
         welcome: {
             riskHashSecret: env.RISK_HASH_SECRET,
             dailyCap: env.WELCOME_DAILY_CAP,
+        },
+        gemini: {
+            apiKey: env.GEMINI_API_KEY,
+            previewModel: env.GEMINI_MODEL_PREVIEW,
+            fullModel: env.GEMINI_MODEL_FULL,
         },
     };
 };
