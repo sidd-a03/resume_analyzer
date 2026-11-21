@@ -4,6 +4,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { AiModule } from '@nestjs/ai';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { PrismaModule } from '../common/prisma/prisma.module.js';
+import { PricingModule } from '../pricing/pricing.module.js';
 import type { AppConfig } from '../config/configuration.js';
 import { ANALYSIS_QUEUE } from './analysis.constants.js';
 import { AnalysesController } from './analyses.controller.js';
@@ -17,6 +18,8 @@ const usageLogger = new Logger('AiUsage');
 @Module({
   imports: [
     PrismaModule,
+
+    PricingModule,
 
     BullModule.registerQueue({ name: ANALYSIS_QUEUE }),
 

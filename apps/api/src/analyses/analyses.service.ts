@@ -12,9 +12,10 @@ import {
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Prisma } from '@repo/database';
-import { CREDIT_COSTS, FREE_PREVIEWS_PER_DAY, type StartAnalysisInput } from '@repo/validation';
+import { FREE_PREVIEWS_PER_DAY, type StartAnalysisInput } from '@repo/validation';
 import type { Queue } from 'bullmq';
 import { PrismaService } from '../common/prisma/prisma.service.js';
+import { PricingService } from '../pricing/pricing.service.js';
 import {
     ANALYSIS_QUEUE,
     ANALYZE_JOB,
@@ -47,6 +48,7 @@ export class AnalysesService implements OnModuleInit {
     constructor(
         private readonly prisma: PrismaService,
         private readonly runner: AnalysisRunner,
+        private readonly pricing: PricingService,
         @InjectQueue(ANALYSIS_QUEUE) private readonly queue: Queue<AnalyzeJobData>,
     ) {}
 
@@ -112,7 +114,8 @@ export class AnalysesService implements OnModuleInit {
         if (input.type === 'PREVIEW') 
             await this.checkFreePreview(userId, inputHash);
 
-        const cost = CREDIT_COSTS[input.type];
+        // Today's price from the database (superadmins can change it); stored on the analysis as creditsSpent
+        const cost = await this.pricing.costOf(input.type);
 
         let analysis;
 
