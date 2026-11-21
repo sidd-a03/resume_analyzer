@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     // resume PDFs are up to 5 MB, plus multipart overhead
     serverActions: { bodySizeLimit: "6mb" },
     agentFeedback: true,
+    agentUpgrade: "security",
   },
   cacheComponents: true,
   partialPrefetching: true,
