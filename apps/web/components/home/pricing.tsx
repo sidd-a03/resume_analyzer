@@ -1,8 +1,24 @@
+import { Suspense } from "react"
+
 import { PricingAction } from "@/components/home/pricing-action"
 import { PricingCards } from "@/components/shared/pricing-cards"
+import { PricingUnavailable } from "@/components/shared/pricing-unavailable"
 import { SectionHeading } from "@/components/shared/section-heading"
 import { BlurFade } from "@/components/ui/blur-fade"
 import { pricingNote } from "@/constants/pricing"
+import { getPricing } from "@/lib/pricing"
+
+async function PricingContent() {
+  const pricing = await getPricing()
+  if (!pricing) return <PricingUnavailable className="mt-14 text-center" />
+  return (
+    <PricingCards
+      pricing={pricing}
+      className="mt-14"
+      renderAction={(pack, featured) => <PricingAction pack={pack} featured={featured} />}
+    />
+  )
+}
 
 export function Pricing() {
   return (
@@ -17,10 +33,9 @@ export function Pricing() {
         </BlurFade>
 
         <BlurFade inView delay={0.1}>
-          <PricingCards
-            className="mt-14"
-            renderAction={(pack, featured) => <PricingAction pack={pack} featured={featured} />}
-          />
+          <Suspense fallback={<div className="mt-14 h-96 animate-pulse rounded-xl border bg-card" aria-hidden="true" />}>
+            <PricingContent />
+          </Suspense>
         </BlurFade>
 
         <p className="mt-8 text-center text-sm text-muted-foreground">

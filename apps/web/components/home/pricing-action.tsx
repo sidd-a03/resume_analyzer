@@ -4,7 +4,7 @@ import Link from "next/link"
 
 import { AuthTrigger } from "@/components/auth/auth-trigger"
 import { buttonVariants } from "@/components/ui/button"
-import type { CreditPack } from "@/constants/pricing"
+import type { CreditPack } from "@/lib/pricing"
 import { authClient } from "@/lib/auth-client"
 import { cn } from "@/lib/utils"
 

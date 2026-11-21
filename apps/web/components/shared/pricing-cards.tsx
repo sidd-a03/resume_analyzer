@@ -1,17 +1,19 @@
 import { Check } from "lucide-react"
 import type { ReactNode } from "react"
 
-import { creditCosts, creditPacks, type CreditPack } from "@/constants/pricing"
+import type { PublicPricing } from "@repo/validation"
+
+import type { CreditPack } from "@/lib/pricing"
 import { cn } from "@/lib/utils"
 
 const inr = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 })
 const inrPrecise = new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 2 })
 
 const perCredit = (pack: CreditPack) => pack.priceInr / pack.credits
-const baseRate = perCredit(creditPacks[0]!)
-const bestValueId = creditPacks.reduce((best, pack) => (perCredit(pack) < perCredit(best) ? pack : best)).id
 
 interface PricingCardsProps {
+  /** From getPricing(): the packs on sale and what analyses cost */
+  pricing: PublicPricing
   /** Button for each pack: opens sign-in on the landing page, starts checkout on /credits. */
   renderAction: (pack: CreditPack, featured: boolean) => ReactNode
   /** Tighter cards without the feature list, for the in-app credits page. */
@@ -19,10 +21,15 @@ interface PricingCardsProps {
   className?: string
 }
 
-export function PricingCards({ renderAction, compact = false, className }: PricingCardsProps) {
+export function PricingCards({ pricing, renderAction, compact = false, className }: PricingCardsProps) {
+  const { packs, costs } = pricing
+  // "save x%" is measured against the dearest credit on sale; superadmins can change any price or hide packs
+  const baseRate = Math.max(...packs.map(perCredit))
+  const bestValueId = packs.length > 1 ? packs.reduce((best, pack) => (perCredit(pack) < perCredit(best) ? pack : best)).id : null
+
   return (
-    <ul className={cn("grid gap-6 md:grid-cols-3 md:items-stretch", className)}>
-      {creditPacks.map((pack) => {
+    <ul className={cn("grid gap-6 md:items-stretch", packs.length >= 3 ? "md:grid-cols-3" : "md:grid-cols-2", className)}>
+      {packs.map((pack) => {
         const featured = pack.id === bestValueId
         const savings = Math.round((1 - perCredit(pack) / baseRate) * 100)
 
@@ -62,10 +69,10 @@ export function PricingCards({ renderAction, compact = false, className }: Prici
             {!compact && (
               <ul className="mt-6 flex flex-col gap-2.5 border-t border-dashed pt-6 text-sm">
                 <Feature>
-                  Up to <strong className="font-semibold">{pack.credits / creditCosts.fullAnalysis}</strong> full analyses
+                  Up to <strong className="font-semibold">{Math.floor(pack.credits / costs.fullAnalysis)}</strong> full analyses
                 </Feature>
                 <Feature>
-                  or <strong className="font-semibold">{Math.floor(pack.credits / creditCosts.jobMatch)}</strong> with a
+                  or <strong className="font-semibold">{Math.floor(pack.credits / costs.jobMatch)}</strong> with a
                   job description match
                 </Feature>
                 <Feature>Rewrites, keyword gaps and section scores</Feature>
