@@ -15,6 +15,7 @@ import { CreditsModule } from './credits/credits.module.js';
 import { RateLimitModule } from './common/throttler/rate-limit.module.js';
 import { UploadsModule } from './uploads/uploads.module.js';
 import { AnalysesModule } from './analyses/analyses.module.js';
+import { PricingModule } from './pricing/pricing.module.js';
 import { BullModule } from '@nestjs/bullmq';
 
 export const { ObserveModule, ObserveInstrument } = createObserveModule();
@@ -60,6 +61,8 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     UploadsModule,
 
     AnalysesModule,
+
+    PricingModule,
 
   ],
   controllers: [AppController],
