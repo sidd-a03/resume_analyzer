@@ -14,6 +14,7 @@ export const statement = {
   ...defaultStatements,
   credits: ["grant", "revoke"],
   analysis: ["view-any", "delete-any"],
+  pricing: ["update"],
 } as const
 
 export type Statement = typeof statement
@@ -31,6 +32,7 @@ export const roleStatements = {
     session: [...defaultStatements.session],
     credits: ["grant", "revoke"],
     analysis: ["view-any", "delete-any"],
+    pricing: ["update"],
   },
 } as const satisfies Record<string, Permissions>
 
