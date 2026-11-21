@@ -10,4 +10,5 @@ export const auditActions: Record<AuditAction, string> = {
   "credits.grant": "Granted credits",
   "credits.revoke": "Revoked credits",
   "analysis.delete": "Deleted analysis",
+  "pricing.update": "Changed pricing",
 }
