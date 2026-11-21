@@ -10,11 +10,16 @@ export const JOB_DESCRIPTION = {
     maxChars: 8000 
 } as const;
 
+export const JOB_TITLE = {
+    minChars: 2,
+    maxChars: 120,
+} as const;
+
 export const startAnalysisSchema = z
     .object({
         resumeId: z.uuid(),
         type: z.enum(ANALYSIS_TYPES),
-        jobTitle: z.string().trim().min(2).max(120).optional(),
+        jobTitle: z.string().trim().min(JOB_TITLE.minChars).max(JOB_TITLE.maxChars).optional(),
         jobDescription: z.string().trim().min(JOB_DESCRIPTION.minChars).max(JOB_DESCRIPTION.maxChars).optional(),
     })
     .refine((v) => v.type !== "JOB_MATCH" || v.jobDescription, {
