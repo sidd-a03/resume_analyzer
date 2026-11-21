@@ -223,6 +223,7 @@ enum AuditAction {
   CREDITS_GRANT
   CREDITS_REVOKE
   ANALYSIS_DELETE
+  PRICING_UPDATE
 }
 
 model Session {
@@ -284,4 +285,24 @@ model RateLimit {
 
   @@unique([key])
   @@map("rateLimit")
+}
+
+model PackPrice {
+  pack       CreditPack @id
+  name       String
+  credits    Int
+  pricePaise Int
+  blurb      String
+  active     Boolean    @default(true)
+  updatedAt  DateTime   @updatedAt
+
+  @@map("pack_price")
+}
+
+model AnalysisPrice {
+  type      AnalysisType @id
+  credits   Int
+  updatedAt DateTime     @updatedAt
+
+  @@map("analysis_price")
 }
