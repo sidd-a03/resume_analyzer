@@ -3,12 +3,6 @@ import { z } from "zod";
 export const ANALYSIS_TYPES = ["PREVIEW", "FULL", "JOB_MATCH"] as const;
 export type AnalysisTypeName = (typeof ANALYSIS_TYPES)[number];
 
-export const CREDIT_COSTS = { 
-    PREVIEW: 0, 
-    FULL: 1, 
-    JOB_MATCH: 2 
-} as const satisfies Record<AnalysisTypeName, number>;
-
 export const FREE_PREVIEWS_PER_DAY = 3;
 
 export const JOB_DESCRIPTION = { 
