@@ -1,4 +1,4 @@
-import { creditCosts } from "@/constants/pricing"
+import type { AnalysisCosts } from "@repo/validation"
 import type { AnalysisStatus, AnalysisType, LedgerReason } from "@/lib/types"
 
 export const resumeLimits = {
@@ -8,17 +8,16 @@ export const resumeLimits = {
 
 export const jobDescriptionLimits = { min: 80, max: 6000 } as const
 
-export const analysisTypes: Record<AnalysisType, { label: string; description: string; cost: number }> = {
-  preview: { label: "Free preview", description: "Score and top 3 issues.", cost: creditCosts.preview },
+
+export const analysisTypes: Record<AnalysisType, { label: string; description: string }> = {
+  preview: { label: "Free preview", description: "Score and top 3 issues." },
   full: {
     label: "Full analysis",
     description: "Every issue, section feedback, keyword gaps and bullet rewrites.",
-    cost: creditCosts.fullAnalysis,
   },
   job_match: {
     label: "Full + job match",
     description: "Everything in full, plus how well you fit a job description you paste.",
-    cost: creditCosts.jobMatch,
   },
 }
 
@@ -42,3 +41,10 @@ export const ledgerReasons: Record<LedgerReason, string> = {
 }
 
 export const pluralCredits = (n: number) => `${n} credit${Math.abs(n) === 1 ? "" : "s"}`
+
+/** What an analysis type costs, in credits, from the current pricing */
+export function costOf(type: AnalysisType, costs: AnalysisCosts) {
+  if (type === "full") return costs.fullAnalysis
+  if (type === "job_match") return costs.jobMatch
+  return 0
+}
