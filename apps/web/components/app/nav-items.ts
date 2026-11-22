@@ -7,6 +7,7 @@ import {
   ScrollText,
   Settings,
   ShieldAlert,
+  Tag,
   Users,
   type LucideIcon,
 } from "lucide-react"
@@ -30,6 +31,7 @@ export const adminNav: NavItem[] = [
   { title: "Users", href: "/admin/users", icon: Users },
   { title: "Analyses", href: "/admin/analyses", icon: Files },
   { title: "Credits", href: "/admin/credits", icon: Coins },
+  { title: "Pricing", href: "/admin/pricing", icon: Tag },
   { title: "Abuse review", href: "/admin/abuse", icon: ShieldAlert },
   { title: "Audit log", href: "/admin/audit", icon: ScrollText },
 ]
