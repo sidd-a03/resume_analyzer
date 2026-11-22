@@ -12,7 +12,7 @@ import { formatBytes } from "@/lib/format"
 import { uploadResume } from "@/lib/queries/analyses"
 import { cn } from "@/lib/utils"
 
-/** A resume the API has accepted. Size and pages are null when it comes from an earlier analysis */
+
 export interface AcceptedResume {
   id: string
   fileName: string
@@ -75,7 +75,6 @@ export function Dropzone({
   const upload = useMutation({
     mutationFn: (file: File) =>
       uploadResume(file, (fraction) => {
-        // The bytes are 90% of the bar; the last part is the API reading the PDF
         setProgress(5 + fraction * 85)
         if (fraction >= 1) setPhase((p) => (p.kind === "uploading" ? { ...p, validating: true } : p))
       }),

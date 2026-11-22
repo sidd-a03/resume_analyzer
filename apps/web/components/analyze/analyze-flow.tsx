@@ -87,10 +87,12 @@ export function AnalyzeFlow({
       type: toApiAnalysisType(type),
       ...(isJobMatch && { jobDescription, ...(titleLength > 0 && { jobTitle }) }),
     })
+    
     if (!input.success) {
       toast.error(input.error.issues[0]?.message ?? "Check the form and try again.")
       return
     }
+
     start.mutate(input.data)
   }
 

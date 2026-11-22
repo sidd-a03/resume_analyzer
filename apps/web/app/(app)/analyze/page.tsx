@@ -14,7 +14,11 @@ export const metadata: Metadata = { title: "New analysis" }
 
 const types: AnalysisType[] = ["preview", "full", "job_match"]
 
-const fallbackCosts = { preview: 0, fullAnalysis: 1, jobMatch: 2 } as const
+const fallbackCosts = { 
+  preview: 0, 
+  fullAnalysis: 1, 
+  jobMatch: 2 
+} as const
 
 async function resumeFrom(analysisId: string | undefined) {
   if (!analysisId) return null
@@ -31,6 +35,7 @@ async function AnalyzeContent({ searchParams }: { searchParams: PageProps<"/anal
     getPricing(),
     resumeFrom(first(params.from)),
   ])
+
   const requestedType = first(params.type) as AnalysisType | undefined
 
   return (
