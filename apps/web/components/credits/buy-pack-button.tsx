@@ -5,7 +5,7 @@ import { useTransition } from "react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import type { CreditPack } from "@/constants/pricing"
+import type { PackId } from "@repo/validation"
 import { startCheckout } from "@/lib/actions/credits"
 
 export function BuyPackButton({
@@ -13,7 +13,7 @@ export function BuyPackButton({
   label,
   highlighted,
 }: {
-  packId: CreditPack["id"]
+  packId: PackId
   label: string
   highlighted: boolean
 }) {
