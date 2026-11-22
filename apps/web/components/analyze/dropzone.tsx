@@ -6,6 +6,7 @@ import { useRef, useState, type DragEvent } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
+import { hasBidiControls } from "@repo/validation"
 import { resumeLimits } from "@/constants/analysis"
 import { ApiError } from "@/lib/api-client"
 import { formatBytes } from "@/lib/format"
@@ -29,8 +30,11 @@ const reject = (title: string, message: string): Phase => ({ kind: "rejected", t
 
 const tooLarge = `That file is over ${resumeLimits.maxMegabytes} MB. Export a smaller PDF.`
 
-/** Checks that need no upload, so the common mistakes fail instantly. The API checks everything again. */
+
 function quickCheck(file: File): Phase | null {
+  if (hasBidiControls(file.name)) {
+    return reject("Unsafe file name", "This file name has hidden characters that disguise its type. Rename it and try again.")
+  }
   const looksLikePdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")
   if (!looksLikePdf) return reject("Not a PDF", "Upload your resume as a PDF file.")
   if (file.size === 0) return reject("Empty file", "That file is empty. Try exporting it again.")
