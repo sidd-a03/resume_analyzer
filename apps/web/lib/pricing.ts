@@ -1,7 +1,8 @@
 import { cacheLife, cacheTag } from "next/cache"
 import type { PublicPricing } from "@repo/validation"
 
-import { apiBaseURL, type ApiEnvelope } from "@/lib/api-client"
+import { apiBaseURL } from "@/constants/api"
+import type { ApiEnvelope } from "@/lib/api-client"
 
 export const PRICING_TAG = "pricing"
 

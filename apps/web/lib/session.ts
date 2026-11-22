@@ -2,10 +2,10 @@ import { cookies } from "next/headers"
 import { notFound, redirect } from "next/navigation"
 import { cache } from "react"
 
+import { authBaseURL } from "@/constants/api"
 import type { SocialProvider } from "@/lib/auth-client"
 import { primaryRole } from "@repo/permission"
 
-const authBaseURL = `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080"}/api/auth`
 
 export type SessionUser = {
   id: string

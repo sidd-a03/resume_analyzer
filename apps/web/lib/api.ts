@@ -1,5 +1,6 @@
 import { cookies } from "next/headers"
-import { apiBaseURL, apiErrorMessage, type ApiEnvelope } from "@/lib/api-client"
+import { apiBaseURL } from "@/constants/api"
+import { apiErrorMessage, type ApiEnvelope } from "@/lib/api-client"
 
 
 export async function apiFetch<T>(path: string): Promise<T | null> {
