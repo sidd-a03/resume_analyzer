@@ -7,3 +7,10 @@ export const RESUME_UPLOAD = {
     mimeType: "application/pdf",
     extension: ".pdf",
 } as const;
+
+/**
+ * new rtlo concept learned from isntagram
+ */
+const BIDI_CONTROLS = /[\u202A-\u202E\u2066-\u2069]/u
+
+export const hasBidiControls = (fileName: string) => BIDI_CONTROLS.test(fileName)
