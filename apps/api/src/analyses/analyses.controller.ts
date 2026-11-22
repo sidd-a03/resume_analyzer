@@ -1,7 +1,7 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post } from '@nestjs/common';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { Session, type UserSession } from '@thallesp/nestjs-better-auth';
-import { startAnalysisSchema, type StartAnalysisInput } from '@repo/validation';
+import { historyQuerySchema, startAnalysisSchema, type HistoryQuery, type StartAnalysisInput } from '@repo/validation';
 import { AnalysesService } from './analyses.service.js';
 
 @Controller('analyses')
@@ -12,6 +12,11 @@ export class AnalysesController {
   @Post()
   start(@Session() session: UserSession, @Body({ schema: startAnalysisSchema }) body: StartAnalysisInput) {
     return this.analysesService.start(session.user.id, body);
+  }
+
+  @Get()
+  list(@Session() session: UserSession, @Query({ schema: historyQuerySchema }) query: HistoryQuery) {
+    return this.analysesService.list(session.user.id, query);
   }
 
   @Get(':id')

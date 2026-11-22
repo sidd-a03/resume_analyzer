@@ -12,7 +12,7 @@ import {
 } from '@nestjs/common';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Prisma } from '@repo/database';
-import { FREE_PREVIEWS_PER_DAY, type StartAnalysisInput } from '@repo/validation';
+import { FREE_PREVIEWS_PER_DAY, type HistoryQuery, type StartAnalysisInput } from '@repo/validation';
 import type { Queue } from 'bullmq';
 import { PrismaService } from '../common/prisma/prisma.service.js';
 import { PricingService } from '../pricing/pricing.service.js';
@@ -31,6 +31,8 @@ import { AnalysisRunner } from './analysis-runner.service.js';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 class InsufficientCreditsError extends Error {}
+
+const escapeLike = (text: string) => text.replace(/[\\%_]/g, '\\$&');
 
 const summary = {
     id: true,
@@ -202,6 +204,41 @@ export class AnalysesService implements OnModuleInit {
         }
 
         return { ...analysis, reused: false };
+    }
+
+    async list(userId: string, q: HistoryQuery) {
+        const where: Prisma.AnalysisWhereInput = {
+            userId,
+            type: q.type,
+            status: q.status,
+            ...(q.search && { resume: { fileName: { contains: escapeLike(q.search), mode: 'insensitive' } } }),
+        };
+
+        const orderBy: Prisma.AnalysisOrderByWithRelationInput[] = [
+            ...(q.sort === 'score' ? [{ score: { sort: q.order, nulls: 'last' as const } }] : []),
+            ...(q.sort === 'fileName' ? [{ resume: { fileName: q.order } }] : []),
+            { createdAt: q.sort === 'createdAt' ? q.order : 'desc' },
+            { id: 'desc' },
+        ];
+
+        const [rows, total] = await this.prisma.$transaction([
+            this.prisma.analysis.findMany({
+                where,
+                orderBy,
+                skip: (q.page - 1) * q.pageSize,
+                take: q.pageSize,
+                select: { ...summary, score: true, resume: { select: { fileName: true } } },
+            }),
+            
+            this.prisma.analysis.count({ where }),
+        ]);
+
+        return {
+            items: rows.map(({ resume, ...rest }) => ({ ...rest, fileName: resume.fileName })),
+            total,
+            page: q.page,
+            pageSize: q.pageSize,
+        };
     }
 
     async get(userId: string, id: string) {
