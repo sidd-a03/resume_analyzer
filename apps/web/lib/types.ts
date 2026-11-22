@@ -1,4 +1,4 @@
-import type { CreditPack } from "@/constants/pricing"
+import type { PackId } from "@repo/validation"
 import type { Severity } from "@/constants/sample-data"
 
 export type AnalysisType = "preview" | "full" | "job_match"
@@ -66,6 +66,11 @@ export type AnalysisDetail = AnalysisSummary & {
   /** 0-2 while running: reading, checking sections, writing suggestions */
   progressStep: number
   refunded: boolean
+  /** Why it failed, e.g. "AI_UNAVAILABLE" (see failureMessages); null unless status is failed */
+  error: string | null
+  /** The job title given for a job match, if any */
+  jobTitle: string | null
+  creditsSpent: number
   report: FullReport | PreviewReport | null
 }
 
@@ -81,7 +86,7 @@ export interface LedgerEntry {
 
 export interface Payment {
   id: string
-  packId: CreditPack["id"]
+  packId: PackId
   credits: number
   status: "pending" | "paid" | "failed"
 }
@@ -138,6 +143,7 @@ export type AuditAction =
   | "credits.grant"
   | "credits.revoke"
   | "analysis.delete"
+  | "pricing.update"
 
 export interface AuditEntry {
   id: string
