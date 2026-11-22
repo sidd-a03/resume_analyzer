@@ -33,6 +33,35 @@ export const startAnalysisSchema = z
 
 export type StartAnalysisInput = z.infer<typeof startAnalysisSchema>;
 
+export const ANALYSIS_STATUSES = ["QUEUED", "RUNNING", "SUCCEEDED", "FAILED"] as const;
+export type AnalysisStatusName = (typeof ANALYSIS_STATUSES)[number];
+
+export const HISTORY_PAGE_SIZE = { 
+    default: 10, 
+    max: 50 
+} as const;
+
+export const HISTORY_SEARCH_MAX_CHARS = 100;
+export const HISTORY_SORTS = ["createdAt", "score", "fileName"] as const;
+export type HistorySort = (typeof HISTORY_SORTS)[number];
+
+export const historyQuerySchema = z.object({
+    page: z.coerce.number().int().min(1).max(10_000).default(1),
+    pageSize: z.coerce.number().int().min(1).max(HISTORY_PAGE_SIZE.max).default(HISTORY_PAGE_SIZE.default),
+    type: z.enum(ANALYSIS_TYPES).optional(),
+    status: z.enum(ANALYSIS_STATUSES).optional(),
+    search: z
+        .string()
+        .trim()
+        .max(HISTORY_SEARCH_MAX_CHARS)
+        .optional()
+        .transform((v) => v || undefined),
+    sort: z.enum(HISTORY_SORTS).default("createdAt"),
+    order: z.enum(["asc", "desc"]).default("desc"),
+});
+
+export type HistoryQuery = z.infer<typeof historyQuerySchema>;
+
 export const REPORT_LIMITS = {
     previewIssues: 3,
     issues: 12,
