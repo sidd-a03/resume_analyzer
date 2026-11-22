@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Redis } from 'ioredis';
-import { RESUME_UPLOAD } from '@repo/validation';
+import { RESUME_UPLOAD, hasBidiControls } from '@repo/validation';
 import { extractText, getDocumentProxy } from 'unpdf';
 import { PrismaService } from '../common/prisma/prisma.service.js';
 import type { AppConfig } from '../config/configuration.js';
@@ -41,6 +41,10 @@ export class UploadsService {
 
     async uploadResume(userId: string, file: Express.Multer.File) {
         const fileName = this.cleanFileName(file.originalname);
+
+        if (hasBidiControls(fileName)) {
+            throw new BadRequestException('This file name has hidden characters that disguise its type. Rename it and try again.');
+        }
 
         if (!fileName.toLowerCase().endsWith(RESUME_UPLOAD.extension)) {
             throw new BadRequestException('Only .pdf files are accepted');
