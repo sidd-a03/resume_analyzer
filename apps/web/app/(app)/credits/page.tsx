@@ -7,21 +7,24 @@ import { LedgerHistory } from "@/components/credits/ledger-history"
 import { PaymentBanner } from "@/components/credits/payment-banner"
 import { PageHeader } from "@/components/shared/page-header"
 import { PricingCards } from "@/components/shared/pricing-cards"
-import { analysisTypes } from "@/constants/analysis"
+import { PricingUnavailable } from "@/components/shared/pricing-unavailable"
+import { pluralCredits } from "@/constants/analysis"
 import { pricingNote } from "@/constants/pricing"
 import { payments } from "@/constants/data"
 import { getCreditBalance, getCreditTransactions } from "@/lib/credits"
+import { getPricing } from "@/lib/pricing"
 import { requireUser } from "@/lib/session"
 import { first } from "@/lib/utils"
 
 export const metadata: Metadata = { title: "Credits" }
 
 async function CreditsContent({ searchParams }: { searchParams: PageProps<"/credits">["searchParams"] }) {
-  const [, params, balance, ledger] = await Promise.all([
+  const [, params, balance, ledger, pricing] = await Promise.all([
     requireUser(),
     searchParams,
     getCreditBalance(),
     getCreditTransactions(),
+    getPricing(),
   ])
   const paymentId = first(params.payment)
   // The landing page's pricing buttons link here with ?pack=
@@ -42,10 +45,12 @@ async function CreditsContent({ searchParams }: { searchParams: PageProps<"/cred
           <p className="text-sm text-muted-foreground">Current balance</p>
           <p className="font-heading text-4xl leading-tight font-semibold">{balance}</p>
         </div>
-        <p className="text-sm text-muted-foreground sm:ml-auto sm:max-w-xs sm:text-right">
-          Full analysis: {analysisTypes.full.cost} credit. With a job match: {analysisTypes.job_match.cost} credits. Free
-          preview: 0.
-        </p>
+        {pricing && (
+          <p className="text-sm text-muted-foreground sm:ml-auto sm:max-w-xs sm:text-right">
+            Full analysis: {pluralCredits(pricing.costs.fullAnalysis)}. With a job match:{" "}
+            {pluralCredits(pricing.costs.jobMatch)}. Free preview: 0.
+          </p>
+        )}
       </section>
 
       <section aria-labelledby="buy-heading">
@@ -53,17 +58,21 @@ async function CreditsContent({ searchParams }: { searchParams: PageProps<"/cred
           Buy credits
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">{pricingNote}</p>
-        <PricingCards
-          compact
-          className="mt-8"
-          renderAction={(pack, featured) => (
-            <BuyPackButton
-              packId={pack.id}
-              label={`Buy ${pack.name}`}
-              highlighted={selectedPack ? selectedPack === pack.id : featured}
-            />
-          )}
-        />
+        {!pricing && <PricingUnavailable className="mt-8" />}
+        {pricing && (
+          <PricingCards
+            pricing={pricing}
+            compact
+            className="mt-8"
+            renderAction={(pack, featured) => (
+              <BuyPackButton
+                packId={pack.id}
+                label={`Buy ${pack.name}`}
+                highlighted={selectedPack ? selectedPack === pack.id : featured}
+              />
+            )}
+          />
+        )}
       </section>
 
       <section aria-labelledby="ledger-heading">
