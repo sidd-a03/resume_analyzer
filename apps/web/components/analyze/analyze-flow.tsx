@@ -1,17 +1,20 @@
 "use client"
 
-import { Info, Loader2, Sparkles } from "lucide-react"
-import { useState, useTransition, type ReactNode } from "react"
+import { Loader2, Sparkles } from "lucide-react"
+import { useState, type ReactNode } from "react"
 import { toast } from "sonner"
+import { startAnalysisSchema, type AnalysisCosts } from "@repo/validation"
 
 import { Dropzone, type AcceptedResume } from "@/components/analyze/dropzone"
 import { InsufficientCreditsDialog, type CreditShortfall } from "@/components/shared/insufficient-credits-dialog"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Textarea } from "@/components/ui/textarea"
-import { analysisTypes, jobDescriptionLimits, pluralCredits } from "@/constants/analysis"
-import { startAnalysis } from "@/lib/actions/analysis"
+import { analysisTypes, costOf, jobDescriptionLimits, jobTitleLimits, pluralCredits } from "@/constants/analysis"
+import { useStartAnalysis } from "@/hooks/use-start-analysis"
+import { toApiAnalysisType } from "@/lib/analysis-api"
 import type { AnalysisType } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
@@ -45,37 +48,50 @@ const typeOrder: AnalysisType[] = ["preview", "full", "job_match"]
 
 export function AnalyzeFlow({
   balance,
+  costs,
   initialResume,
   initialType,
 }: {
   balance: number
+  costs: AnalysisCosts
   initialResume: AcceptedResume | null
   initialType: AnalysisType
 }) {
   const [accepted, setAccepted] = useState(initialResume)
   const [type, setType] = useState<AnalysisType>(initialType)
+  const [jobTitle, setJobTitle] = useState("")
   const [jobDescription, setJobDescription] = useState("")
   const [shortfall, setShortfall] = useState<CreditShortfall | null>(null)
-  const [pending, startTransition] = useTransition()
+  // An expired or deleted resume can't be analyzed: clear it so the user uploads it again
+  const start = useStartAnalysis({ onResumeGone: () => setAccepted(null) })
+  // Stays busy after success too, while the analysis page opens
+  const pending = start.isPending || start.isSuccess
 
-  const alreadyAnalyzed = type !== "job_match" && accepted?.analyzedTypes.includes(type)
-  const cost = alreadyAnalyzed ? 0 : analysisTypes[type].cost
+  const isJobMatch = type === "job_match"
+  const cost = costOf(type, costs)
   const jdLength = jobDescription.trim().length
-  const jdValid = type !== "job_match" || (jdLength >= jobDescriptionLimits.min && jdLength <= jobDescriptionLimits.max)
-  const canAnalyze = accepted !== null && jdValid && !pending
+  const jdValid = !isJobMatch || (jdLength >= jobDescriptionLimits.min && jdLength <= jobDescriptionLimits.max)
+  const titleLength = jobTitle.trim().length
+  const titleValid = !isJobMatch || titleLength === 0 || titleLength >= jobTitleLimits.min
+  const canAnalyze = accepted !== null && jdValid && titleValid && !pending
 
   function analyze() {
     if (!accepted) return
+    // Saves a round trip in the common case. The API checks the balance again and has the final say
     if (cost > balance) {
       setShortfall({ balance, cost })
       return
     }
-    startTransition(async () => {
-      // Redirects to the analysis page on success, so a result means it didn't start
-      const result = await startAnalysis({ resumeId: accepted.resume.id, type, jobDescription })
-      if (result.code === "insufficient_credits") setShortfall({ balance: result.balance, cost: result.cost })
-      else toast.error(result.message)
+    const input = startAnalysisSchema.safeParse({
+      resumeId: accepted.id,
+      type: toApiAnalysisType(type),
+      ...(isJobMatch && { jobDescription, ...(titleLength > 0 && { jobTitle }) }),
     })
+    if (!input.success) {
+      toast.error(input.error.issues[0]?.message ?? "Check the form and try again.")
+      return
+    }
+    start.mutate(input.data)
   }
 
   return (
@@ -95,6 +111,7 @@ export function AnalyzeFlow({
           >
             {typeOrder.map((option) => {
               const meta = analysisTypes[option]
+              const optionCost = costOf(option, costs)
               return (
                 <Label
                   key={option}
@@ -106,7 +123,7 @@ export function AnalyzeFlow({
                   <div className="flex w-full items-center justify-between gap-2">
                     <RadioGroupItem value={option} />
                     <span className="font-mono text-xs text-muted-foreground">
-                      {meta.cost === 0 ? "Free" : pluralCredits(meta.cost)}
+                      {optionCost === 0 ? "Free" : pluralCredits(optionCost)}
                     </span>
                   </div>
                   <span className="font-semibold">{meta.label}</span>
@@ -116,7 +133,27 @@ export function AnalyzeFlow({
             })}
           </RadioGroup>
 
-          {type === "job_match" && accepted && (
+          {isJobMatch && accepted && (
+            <div className="mt-5">
+              <Label htmlFor="job-title" className="font-medium">
+                Job title <span className="font-normal text-muted-foreground">(optional)</span>
+              </Label>
+              <Input
+                id="job-title"
+                value={jobTitle}
+                onChange={(event) => setJobTitle(event.target.value)}
+                maxLength={jobTitleLimits.max}
+                placeholder="For example, Frontend Developer"
+                aria-invalid={!titleValid}
+                className="mt-2 bg-card"
+              />
+              {!titleValid && (
+                <p className="mt-1.5 text-xs text-destructive">At least {jobTitleLimits.min} characters, or leave it empty.</p>
+              )}
+            </div>
+          )}
+
+          {isJobMatch && accepted && (
             <div className="mt-5">
               <Label htmlFor="jd" className="font-medium">
                 Job description
@@ -141,12 +178,6 @@ export function AnalyzeFlow({
         </Step>
 
         <Step index={3} title="Confirm" disabled={!accepted}>
-          {alreadyAnalyzed && (
-            <p className="mb-4 flex items-start gap-2 rounded-lg border border-success/30 bg-success/5 px-3 py-2.5 text-sm">
-              <Info className="mt-0.5 size-4 shrink-0 text-success" aria-hidden="true" />
-              We already have this analysis, so it&apos;s free.
-            </p>
-          )}
           <div className="flex flex-col gap-4 rounded-xl border bg-card p-5 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm">
               This will use <strong className="font-mono">{pluralCredits(cost)}</strong>.{" "}

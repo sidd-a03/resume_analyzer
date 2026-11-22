@@ -1,23 +1,53 @@
-import { Check, Loader2 } from "lucide-react"
+"use client"
 
-import { RefreshWhile } from "@/components/shared/refresh-while"
+import { useQuery } from "@tanstack/react-query"
+import { Check, Loader2, RotateCcw } from "lucide-react"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
+
+import { Button } from "@/components/ui/button"
 import { progressMessages } from "@/constants/analysis"
-import type { AnalysisStatus } from "@/lib/types"
+import { analysisQuery, isStalled } from "@/lib/queries/analyses"
+import type { AnalysisDetail } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
-/** Queued and running states: the report's outline as a skeleton, with live progress. */
-export function AnalysisProgress({ status, step }: { status: AnalysisStatus; step: number }) {
-  const current = status === "queued" ? -1 : step
+/**
+ * Queued and running states: the report's outline as a skeleton, with live progress. Polls the API (see
+ * analysisQuery for the schedule) and refreshes the page when the status changes, so the server renders
+ * the finished report or the failure.
+ */
+export function AnalysisProgress({ initial }: { initial: AnalysisDetail }) {
+  const router = useRouter()
+  const { data: analysis, dataUpdatedAt, refetch, isFetching } = useQuery(analysisQuery(initial))
+
+  useEffect(() => {
+    if (analysis.status !== initial.status) router.refresh()
+  }, [analysis.status, initial.status, router])
+
+  const stalled = isStalled(analysis, dataUpdatedAt)
+  const current = analysis.status === "queued" ? -1 : analysis.progressStep
 
   return (
     <div className="mt-8 grid gap-6 lg:grid-cols-[320px_1fr]">
-      <RefreshWhile active />
-
       <div className="rounded-xl border bg-card p-6">
         <p className="font-semibold" role="status" aria-live="polite">
-          {status === "queued" ? "Waiting for a free worker…" : progressMessages[step]}
+          {stalled
+            ? "This is taking longer than usual"
+            : analysis.status === "queued"
+              ? "Waiting for a free worker…"
+              : progressMessages[analysis.progressStep]}
         </p>
-        <p className="mt-1 text-sm text-muted-foreground">This usually takes under a minute. You can leave this page.</p>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {stalled
+            ? "It's still in the queue and will finish on its own. If it fails, any credits spent are refunded."
+            : "This usually takes under a minute. You can leave this page."}
+        </p>
+        {stalled && (
+          <Button variant="outline" size="sm" className="mt-4" onClick={() => refetch()} disabled={isFetching}>
+            {isFetching ? <Loader2 className="animate-spin" /> : <RotateCcw />}
+            Check again
+          </Button>
+        )}
         <ol className="mt-6 flex flex-col gap-3">
           {progressMessages.map((message, index) => (
             <li
@@ -32,7 +62,7 @@ export function AnalysisProgress({ status, step }: { status: AnalysisStatus; ste
               >
                 {index < current ? (
                   <Check className="size-3.5" aria-hidden="true" />
-                ) : index === current ? (
+                ) : index === current && !stalled ? (
                   <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
                 ) : null}
               </span>

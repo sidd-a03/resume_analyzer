@@ -1,12 +1,21 @@
-import type { AnalysisCosts } from "@repo/validation"
+import { JOB_DESCRIPTION, JOB_TITLE, RESUME_UPLOAD, type AnalysisCosts } from "@repo/validation"
 import type { AnalysisStatus, AnalysisType, LedgerReason } from "@/lib/types"
 
 export const resumeLimits = {
-  maxBytes: 5 * 1024 * 1024,
-  maxPages: 3,
+  maxBytes: RESUME_UPLOAD.maxBytes,
+  maxMegabytes: RESUME_UPLOAD.maxBytes / (1024 * 1024),
+  maxPages: RESUME_UPLOAD.maxPages,
 } as const
 
-export const jobDescriptionLimits = { min: 80, max: 6000 } as const
+export const jobDescriptionLimits = { 
+  min: JOB_DESCRIPTION.minChars, 
+  max: JOB_DESCRIPTION.maxChars 
+} as const
+
+export const jobTitleLimits = { 
+  min: JOB_TITLE.minChars, 
+  max: JOB_TITLE.maxChars 
+} as const
 
 
 export const analysisTypes: Record<AnalysisType, { label: string; description: string }> = {
@@ -30,6 +39,13 @@ export const analysisStatuses: Record<AnalysisStatus, string> = {
 
 export const progressMessages = ["Reading your resume…", "Checking sections…", "Writing suggestions…"] as const
 
+export const failureMessages: Record<string, string> = {
+  TEXT_EXPIRED: "We no longer keep the text of this resume. Upload it again to analyze it.",
+  AI_NOT_CONFIGURED: "Analyses are switched off right now. Try again later.",
+  AI_UNAVAILABLE: "Our AI provider didn't respond. It's usually back within minutes, so try again shortly.",
+  default: "Something went wrong while reading your resume.",
+}
+
 export const ledgerReasons: Record<LedgerReason, string> = {
   welcome: "Welcome credit",
   purchase: "Purchase",
@@ -42,7 +58,7 @@ export const ledgerReasons: Record<LedgerReason, string> = {
 
 export const pluralCredits = (n: number) => `${n} credit${Math.abs(n) === 1 ? "" : "s"}`
 
-/** What an analysis type costs, in credits, from the current pricing */
+
 export function costOf(type: AnalysisType, costs: AnalysisCosts) {
   if (type === "full") return costs.fullAnalysis
   if (type === "job_match") return costs.jobMatch

@@ -1,19 +1,23 @@
 "use client"
 
+import { useMutation } from "@tanstack/react-query"
 import { CircleAlert, FileText, Loader2, Upload, X } from "lucide-react"
-import { useEffect, useRef, useState, type DragEvent } from "react"
+import { useRef, useState, type DragEvent } from "react"
 
 import { Button } from "@/components/ui/button"
 import { Progress } from "@/components/ui/progress"
 import { resumeLimits } from "@/constants/analysis"
-import { uploadResume } from "@/lib/actions/analysis"
-import type { AnalysisType, Resume } from "@/lib/types"
+import { ApiError } from "@/lib/api-client"
 import { formatBytes } from "@/lib/format"
+import { uploadResume } from "@/lib/queries/analyses"
 import { cn } from "@/lib/utils"
 
+/** A resume the API has accepted. Size and pages are null when it comes from an earlier analysis */
 export interface AcceptedResume {
-  resume: Resume
-  analyzedTypes: AnalysisType[]
+  id: string
+  fileName: string
+  sizeBytes: number | null
+  pages: number | null
 }
 
 type Phase =
@@ -21,22 +25,36 @@ type Phase =
   | { kind: "uploading"; fileName: string; validating: boolean }
   | { kind: "rejected"; title: string; message: string }
 
-const rejectTitles = {
-  not_pdf: "Not a PDF",
-  too_large: "File too large",
-  empty: "Empty file",
-  scanned: "No readable text",
-  too_many_pages: "Too many pages",
-} as const
+const reject = (title: string, message: string): Phase => ({ kind: "rejected", title, message })
 
-/** Checks that need no upload, so the common mistakes fail instantly. */
+const tooLarge = `That file is over ${resumeLimits.maxMegabytes} MB. Export a smaller PDF.`
+
+/** Checks that need no upload, so the common mistakes fail instantly. The API checks everything again. */
 function quickCheck(file: File): Phase | null {
   const looksLikePdf = file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")
-  if (!looksLikePdf) return { kind: "rejected", title: rejectTitles.not_pdf, message: "Upload your resume as a PDF file." }
-  if (file.size > resumeLimits.maxBytes) {
-    return { kind: "rejected", title: rejectTitles.too_large, message: "That file is over 5 MB. Export a smaller PDF." }
-  }
+  if (!looksLikePdf) return reject("Not a PDF", "Upload your resume as a PDF file.")
+  if (file.size === 0) return reject("Empty file", "That file is empty. Try exporting it again.")
+  if (file.size > resumeLimits.maxBytes) return reject("File too large", tooLarge)
   return null
+}
+
+/** The API's answer as something the user can act on. Its messages are written for people, so most are shown as-is */
+function rejection(error: unknown): Phase {
+  if (!(error instanceof ApiError)) return reject("Upload failed", "Something went wrong. Try again.")
+  switch (error.status) {
+    case 400:
+      return reject("Not a PDF", error.message)
+    case 401:
+      return reject("Signed out", "Your session expired. Sign in again, then upload.")
+    case 413:
+      return reject("File too large", tooLarge)
+    case 422: // scanned, password-protected, too many pages or damaged
+      return reject("Can't use this PDF", error.message)
+    case 429: // another upload still running, or too many in a minute
+      return reject("One moment", error.message)
+    default:
+      return reject("Upload failed", error.message)
+  }
 }
 
 export function Dropzone({
@@ -54,12 +72,14 @@ export function Dropzone({
   const [progress, setProgress] = useState(0)
   const uploading = phase.kind === "uploading"
 
-  // Server Actions don't report upload progress, so ease towards 90% until the response lands
-  useEffect(() => {
-    if (!uploading) return
-    const timer = setInterval(() => setProgress((p) => (p < 90 ? p + (90 - p) * 0.15 : p)), 120)
-    return () => clearInterval(timer)
-  }, [uploading])
+  const upload = useMutation({
+    mutationFn: (file: File) =>
+      uploadResume(file, (fraction) => {
+        // The bytes are 90% of the bar; the last part is the API reading the PDF
+        setProgress(5 + fraction * 85)
+        if (fraction >= 1) setPhase((p) => (p.kind === "uploading" ? { ...p, validating: true } : p))
+      }),
+  })
 
   async function handleFile(file: File | undefined) {
     if (!file || uploading) return
@@ -71,25 +91,13 @@ export function Dropzone({
 
     setProgress(5)
     setPhase({ kind: "uploading", fileName: file.name, validating: false })
-    const validatingTimer = setTimeout(
-      () => setPhase((p) => (p.kind === "uploading" ? { ...p, validating: true } : p)),
-      700,
-    )
-
-    const formData = new FormData()
-    formData.set("file", file)
     try {
-      const result = await uploadResume(formData)
-      if (result.ok) {
-        setPhase({ kind: "idle" })
-        onAccepted({ resume: result.resume, analyzedTypes: result.analyzedTypes })
-      } else {
-        setPhase({ kind: "rejected", title: rejectTitles[result.reason], message: result.message })
-      }
-    } catch {
-      setPhase({ kind: "rejected", title: "Upload failed", message: "Check your connection and try again." })
+      const resume = await upload.mutateAsync(file)
+      setPhase({ kind: "idle" })
+      onAccepted({ id: resume.id, fileName: resume.fileName, sizeBytes: resume.sizeBytes, pages: resume.pages })
+    } catch (error) {
+      setPhase(rejection(error))
     } finally {
-      clearTimeout(validatingTimer)
       if (inputRef.current) inputRef.current.value = ""
     }
   }
@@ -101,20 +109,22 @@ export function Dropzone({
   }
 
   if (accepted) {
-    const { resume } = accepted
+    const details = [
+      accepted.sizeBytes !== null && formatBytes(accepted.sizeBytes),
+      accepted.pages && `${accepted.pages} page${accepted.pages === 1 ? "" : "s"}`,
+      "ready",
+    ].filter(Boolean)
+
     return (
       <div className="flex items-center gap-4 rounded-xl border bg-card p-4 shadow-paper">
         <span className="grid size-12 shrink-0 place-items-center rounded-lg border bg-success/10 text-success">
           <FileText className="size-5" aria-hidden="true" />
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate font-medium">{resume.fileName}</p>
-          <p className="font-mono text-xs text-muted-foreground">
-            {formatBytes(resume.sizeBytes)}
-            {resume.pages > 0 && ` · ${resume.pages} page${resume.pages === 1 ? "" : "s"}`} · ready
-          </p>
+          <p className="truncate font-medium">{accepted.fileName}</p>
+          <p className="font-mono text-xs text-muted-foreground">{details.join(" · ")}</p>
         </div>
-        <Button variant="ghost" size="icon" onClick={onRemove} aria-label={`Remove ${resume.fileName}`}>
+        <Button variant="ghost" size="icon" onClick={onRemove} aria-label={`Remove ${accepted.fileName}`}>
           <X />
         </Button>
       </div>
@@ -172,7 +182,7 @@ export function Dropzone({
             <div>
               <p className="text-lg font-semibold">{dragging ? "Drop it here" : "Drop your resume here"}</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                Text-based PDF · up to 5 MB · {resumeLimits.maxPages} pages max
+                Text-based PDF · up to {resumeLimits.maxMegabytes} MB · {resumeLimits.maxPages} pages max
               </p>
             </div>
           )}

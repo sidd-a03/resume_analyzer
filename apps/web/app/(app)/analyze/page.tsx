@@ -3,8 +3,9 @@ import { Suspense } from "react"
 
 import { AnalyzeFlow } from "@/components/analyze/analyze-flow"
 import { PageHeader } from "@/components/shared/page-header"
-import { analyses, resumes } from "@/constants/data"
+import { getAnalysis } from "@/lib/analyses"
 import { getCreditBalance } from "@/lib/credits"
+import { getPricing } from "@/lib/pricing"
 import type { AnalysisType } from "@/lib/types"
 import { requireUser } from "@/lib/session"
 import { first } from "@/lib/utils"
@@ -13,27 +14,29 @@ export const metadata: Metadata = { title: "New analysis" }
 
 const types: AnalysisType[] = ["preview", "full", "job_match"]
 
+const fallbackCosts = { preview: 0, fullAnalysis: 1, jobMatch: 2 } as const
+
+async function resumeFrom(analysisId: string | undefined) {
+  if (!analysisId) return null
+  
+  const source = await getAnalysis(analysisId).catch(() => null)
+  return source ? { id: source.resumeId, fileName: source.fileName, sizeBytes: null, pages: null } : null
+}
+
 async function AnalyzeContent({ searchParams }: { searchParams: PageProps<"/analyze">["searchParams"] }) {
-  const [, params, balance] = await Promise.all([requireUser(), searchParams, getCreditBalance()])
-  const resumeId = first(params.resume)
+  const params = await searchParams
+  const [, balance, pricing, initialResume] = await Promise.all([
+    requireUser(),
+    getCreditBalance(),
+    getPricing(),
+    resumeFrom(first(params.from)),
+  ])
   const requestedType = first(params.type) as AnalysisType | undefined
-
-  // TODO: serve actual data from the backend
-  const resume = resumes.find((r) => r.id === resumeId)
-
-  // "Re-analyze" links here with ?resume=, so start with that file already accepted
-  const initialResume = resume
-    ? {
-        resume,
-        analyzedTypes: [
-          ...new Set(analyses.filter((a) => a.resumeId === resume.id && a.status === "succeeded").map((a) => a.type)),
-        ],
-      }
-    : null
 
   return (
     <AnalyzeFlow
       balance={balance}
+      costs={pricing?.costs ?? fallbackCosts}
       initialResume={initialResume}
       initialType={requestedType && types.includes(requestedType) ? requestedType : "preview"}
     />

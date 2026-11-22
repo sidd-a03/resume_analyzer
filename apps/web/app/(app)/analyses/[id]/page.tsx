@@ -6,24 +6,31 @@ import { Suspense } from "react"
 
 import { AnalysisProgress } from "@/components/analysis/analysis-progress"
 import { FullReportView, PreviewReportView } from "@/components/analysis/analysis-report"
-import { DeleteAnalysisButton } from "@/components/analysis/delete-analysis-button"
 import { StatusBadge, TypeBadge } from "@/components/shared/analysis-badges"
 import { PageHeader } from "@/components/shared/page-header"
 import { buttonVariants } from "@/components/ui/button"
-import { analysisDetails } from "@/constants/data"
+import { failureMessages } from "@/constants/analysis"
+import { getAnalysis } from "@/lib/analyses"
+import { getCreditBalance } from "@/lib/credits"
 import { formatDateTime } from "@/lib/format"
+import { getPricing } from "@/lib/pricing"
 import { requireUser } from "@/lib/session"
 import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = { title: "Analysis" }
 
 async function AnalysisContent({ params }: { params: PageProps<"/analyses/[id]">["params"] }) {
-  const [, { id }] = await Promise.all([requireUser(), params])
-  // TODO: serve actual data from the backend
-  const analysis = analysisDetails[id]
+  const [, analysis, pricing, balance] = await Promise.all([
+    requireUser(),
+    params.then(({ id }) => getAnalysis(id)),
+    getPricing(),
+    getCreditBalance(),
+  ])
   if (!analysis) notFound()
 
-  const reanalyzeHref = `/analyze?resume=${analysis.resumeId}&type=${analysis.type}`
+  const reanalyzeHref = `/analyze?from=${analysis.id}&type=${analysis.type}`
+  // The resume's text is gone, so offering the same resume again would only fail: start from an upload
+  const retryHref = analysis.error === "TEXT_EXPIRED" ? "/analyze" : reanalyzeHref
 
   return (
     <>
@@ -37,19 +44,14 @@ async function AnalysisContent({ params }: { params: PageProps<"/analyses/[id]">
           </span>
         }
         actions={
-          <>
-            <Link href={reanalyzeHref} className={cn(buttonVariants({ variant: "outline" }))}>
-              <RotateCcw data-icon="inline-start" />
-              Re-analyze
-            </Link>
-            <DeleteAnalysisButton id={analysis.id} fileName={analysis.fileName} from="detail" />
-          </>
+          <Link href={reanalyzeHref} className={cn(buttonVariants({ variant: "outline" }))}>
+            <RotateCcw data-icon="inline-start" />
+            Re-analyze
+          </Link>
         }
       />
 
-      {(analysis.status === "queued" || analysis.status === "running") && (
-        <AnalysisProgress status={analysis.status} step={analysis.progressStep} />
-      )}
+      {(analysis.status === "queued" || analysis.status === "running") && <AnalysisProgress initial={analysis} />}
 
       {analysis.status === "failed" && (
         <div role="alert" className="mt-8 flex max-w-2xl flex-col items-start gap-4 rounded-xl border border-destructive/30 bg-destructive/5 p-6">
@@ -57,18 +59,25 @@ async function AnalysisContent({ params }: { params: PageProps<"/analyses/[id]">
           <div>
             <p className="text-lg font-semibold">We couldn&apos;t finish this analysis</p>
             <p className="mt-1 text-muted-foreground">
-              Something went wrong while reading your resume.
+              {(analysis.error && failureMessages[analysis.error]) ?? failureMessages.default}
               {analysis.refunded && " Credits used on this analysis have been refunded."}
             </p>
           </div>
-          <Link href={reanalyzeHref} className={cn(buttonVariants())}>
+          <Link href={retryHref} className={cn(buttonVariants())}>
             Try again
           </Link>
         </div>
       )}
 
       {analysis.report?.kind === "full" && <FullReportView report={analysis.report} />}
-      {analysis.report?.kind === "preview" && <PreviewReportView report={analysis.report} analysisId={analysis.id} />}
+      {analysis.report?.kind === "preview" && (
+        <PreviewReportView
+          report={analysis.report}
+          resumeId={analysis.resumeId}
+          unlockCost={pricing?.costs.fullAnalysis ?? 1}
+          balance={balance}
+        />
+      )}
     </>
   )
 }

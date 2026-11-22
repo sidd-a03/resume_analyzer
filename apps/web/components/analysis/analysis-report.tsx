@@ -179,7 +179,17 @@ function LockedCard({ title, count, unit }: { title: string; count: number; unit
   )
 }
 
-export function PreviewReportView({ report, analysisId }: { report: PreviewReport; analysisId: string }) {
+export function PreviewReportView({
+  report,
+  resumeId,
+  unlockCost,
+  balance,
+}: {
+  report: PreviewReport
+  resumeId: string
+  unlockCost: number
+  balance: number
+}) {
   const { locked } = report
   const totalLocked = locked.issues + locked.sections + locked.rewrites
 
@@ -201,7 +211,7 @@ export function PreviewReportView({ report, analysisId }: { report: PreviewRepor
             Unlock the full analysis for every issue, section-by-section feedback, keyword gaps and rewritten bullets.
           </p>
           <div className="mt-5">
-            <UnlockButton analysisId={analysisId} />
+            <UnlockButton resumeId={resumeId} cost={unlockCost} balance={balance} />
           </div>
         </div>
         <LockedCard title="More issues" count={locked.issues} unit="issues" />
