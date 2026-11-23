@@ -88,3 +88,7 @@ export function uploadResume(file: File, onProgress?: (fraction: number) => void
   body.set("file", file)
   return apiClientUpload<UploadedResume>("/uploads/upload", body, onProgress)
 }
+
+export function deleteAllResumes() {
+  return apiClientFetch<{ deleted: number }>("/resumes", { method: "DELETE" })
+}

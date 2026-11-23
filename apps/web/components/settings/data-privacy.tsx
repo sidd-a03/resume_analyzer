@@ -1,23 +1,34 @@
 "use client"
 
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
 import { ConfirmByTypingDialog } from "@/components/settings/confirm-by-typing-dialog"
-import { deleteAllResumes } from "@/lib/actions/account"
 import { authClient } from "@/lib/auth-client"
 import { authErrorMessage } from "@/lib/auth-errors"
+import { analysisKeys, deleteAllResumes } from "@/lib/queries/analyses"
 
 export function DataPrivacy() {
   const router = useRouter()
+  const queryClient = useQueryClient()
+
+  const removeResumes = useMutation({
+    mutationFn: deleteAllResumes,
+    onSuccess: () => {
+      queryClient.removeQueries({ queryKey: analysisKeys.all })
+      router.refresh()
+    },
+  })
 
   async function deleteResumes() {
     try {
-      await deleteAllResumes()
+      await removeResumes.mutateAsync()
       toast.success("All your resumes and analyses are deleted")
       return true
-    } catch {
-      toast.error("Couldn't delete them. Try again.")
+    } catch (error) {
+      // The API explains the cases it refuses, e.g. while an analysis is still running
+      toast.error(error instanceof Error ? error.message : "Couldn't delete them. Try again.")
       return false
     }
   }
@@ -50,7 +61,7 @@ export function DataPrivacy() {
           <ConfirmByTypingDialog
             trigger="Delete data"
             title="Delete all resumes and analyses?"
-            description="Every uploaded file and every report will be removed. Credits you spent won't come back."
+            description="Every uploaded resume, its text and every report will be removed right away. Credits you spent won't come back, and analyzing the same file again costs credits again."
             word="DELETE"
             actionLabel="Delete everything"
             onConfirm={deleteResumes}
