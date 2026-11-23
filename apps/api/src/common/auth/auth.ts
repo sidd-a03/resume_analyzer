@@ -131,7 +131,10 @@ function authOptions(config: ConfigService<AppConfig, true>) {
         account: {
             accountLinking: {
                 enabled: true,
-                trustedProviders: ["google", "github"],
+                // No trustedProviders on purpose: a provider listed there is linked to an existing user with the
+                // same email even when the provider says the email is NOT verified, so a GitHub account made with
+                // someone else's (unconfirmed) email could sign in as them. Without it, better-auth links only when
+                // Google or GitHub reports the email as verified.
                 allowDifferentEmails: true
             }
         },
