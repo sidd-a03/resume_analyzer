@@ -14,6 +14,7 @@ import { TransformInterceptor } from './utils/transform.interceptor.js';
 import { CreditsModule } from './credits/credits.module.js';
 import { RateLimitModule } from './common/throttler/rate-limit.module.js';
 import { UploadsModule } from './uploads/uploads.module.js';
+import { ResumesModule } from './resumes/resumes.module.js';
 import { AnalysesModule } from './analyses/analyses.module.js';
 import { PricingModule } from './pricing/pricing.module.js';
 import { BullModule } from '@nestjs/bullmq';
@@ -59,6 +60,8 @@ export const { ObserveModule, ObserveInstrument } = createObserveModule();
     CreditsModule,
 
     UploadsModule,
+
+    ResumesModule,
 
     AnalysesModule,
 
