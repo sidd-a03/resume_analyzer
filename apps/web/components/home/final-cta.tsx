@@ -18,6 +18,7 @@ export function FinalCta() {
               </p>
             </div>
             <AuthTrigger
+              signedInHref="/analyze"
               size="lg"
               className="h-12 shrink-0 rounded-lg bg-highlight px-6 text-base text-neutral-900 hover:bg-highlight/85"
             >

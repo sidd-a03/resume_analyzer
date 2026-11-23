@@ -31,7 +31,7 @@ export function Hero() {
           </p>
 
           <div className={cn(enter, "mt-9 flex w-full flex-col gap-3 sm:w-auto sm:flex-row delay-200")}>
-            <AuthTrigger size="lg" className="h-12 rounded-lg px-6 text-base hover:bg-primary/85">
+            <AuthTrigger signedInHref="/analyze" size="lg" className="h-12 rounded-lg px-6 text-base hover:bg-primary/85">
               Get started free
               <ArrowRight data-icon="inline-end" className="transition-transform group-hover/button:translate-x-0.5" />
             </AuthTrigger>
