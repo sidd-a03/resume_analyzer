@@ -1,24 +1,27 @@
 import { Plus } from "lucide-react"
 import type { Metadata } from "next"
 import Link from "next/link"
+import { redirect } from "next/navigation"
 import { Suspense } from "react"
 
 import { HistoryTable } from "@/components/history/history-table"
 import { EmptyState } from "@/components/shared/empty-state"
 import { PageHeader } from "@/components/shared/page-header"
-import { RefreshWhile } from "@/components/shared/refresh-while"
 import { buttonVariants } from "@/components/ui/button"
-import { analyses } from "@/constants/data"
+import { listAnalyses } from "@/lib/analyses"
+import { hasHistoryFilters, historyUrlQuery, parseHistoryParams } from "@/lib/history"
 import { requireUser } from "@/lib/session"
 import { cn } from "@/lib/utils"
 
 export const metadata: Metadata = { title: "History" }
 
-async function HistoryContent() {
-  await requireUser()
-  // TODO: serve actual data from the backend
+async function HistoryContent({ searchParams }: { searchParams: PageProps<"/history">["searchParams"] }) {
+  const [, raw] = await Promise.all([requireUser(), searchParams])
 
-  if (analyses.length === 0) {
+  const params = parseHistoryParams(raw)
+  const page = await listAnalyses(params)
+
+  if (page.total === 0 && !hasHistoryFilters(params)) {
     return (
       <EmptyState
         title="No analyses yet"
@@ -32,15 +35,13 @@ async function HistoryContent() {
     )
   }
 
-  return (
-    <>
-      <RefreshWhile active={analyses.some((a) => a.status === "queued" || a.status === "running")} />
-      <HistoryTable analyses={analyses} />
-    </>
-  )
+  const lastPage = Math.max(1, Math.ceil(page.total / params.pageSize))
+  if (params.page > lastPage) redirect(`/history${historyUrlQuery({ ...params, page: lastPage })}`)
+
+  return <HistoryTable initial={page} initialParams={params} />
 }
 
-export default function HistoryPage() {
+export default function HistoryPage({ searchParams }: PageProps<"/history">) {
   return (
     <div className="container-app">
       <PageHeader
@@ -56,7 +57,7 @@ export default function HistoryPage() {
 
       <div className="mt-8">
         <Suspense fallback={<div className="h-72 animate-pulse rounded-xl border bg-card" aria-hidden="true" />}>
-          <HistoryContent />
+          <HistoryContent searchParams={searchParams} />
         </Suspense>
       </div>
     </div>

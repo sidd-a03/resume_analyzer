@@ -1,3 +1,6 @@
+"use client"
+
+import { useQuery } from "@tanstack/react-query"
 import { FileText } from "lucide-react"
 import Link from "next/link"
 
@@ -5,8 +8,10 @@ import { StatusBadge, TypeBadge } from "@/components/shared/analysis-badges"
 import { EmptyState } from "@/components/shared/empty-state"
 import { ScoreRing } from "@/components/shared/score-ring"
 import { buttonVariants } from "@/components/ui/button"
-import type { AnalysisSummary } from "@/lib/types"
 import { formatDate } from "@/lib/format"
+import { recentAnalysesParams, type HistoryPage } from "@/lib/history"
+import { historyQuery } from "@/lib/queries/analyses"
+import type { AnalysisSummary } from "@/lib/types"
 import { cn } from "@/lib/utils"
 
 function AnalysisCard({ analysis }: { analysis: AnalysisSummary }) {
@@ -36,7 +41,14 @@ function AnalysisCard({ analysis }: { analysis: AnalysisSummary }) {
   )
 }
 
-export function RecentAnalyses({ analyses }: { analyses: AnalysisSummary[] }) {
+/**
+ * The server renders the first list; TanStack Query then re-checks it every few seconds while one of them
+ * is still queued or running (the same polling rule as the history page), and stops once all are done.
+ */
+export function RecentAnalyses({ initial }: { initial: HistoryPage }) {
+  const { data } = useQuery(historyQuery(recentAnalysesParams, initial))
+  const analyses = data?.items ?? initial.items
+
   return (
     <section aria-labelledby="recent-heading">
       <div className="flex items-baseline justify-between gap-4">
